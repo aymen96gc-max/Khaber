@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "309327872479",
+    "project_id": "khabar-790e3",
+    "storage_bucket": "khabar-790e3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:309327872479:android:d1cec3378e3027d174446a",
+        "android_client_info": {
+          "package_name": "com.example.khabar"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "309327872479-jlleqqau0d4elsobfqkserpnhclla30l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDt_on5SVB9LEWfVSfM6PJFywla9N2WoRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "309327872479-jlleqqau0d4elsobfqkserpnhclla30l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "309327872479-p4upnlima8o5g7u40geucumv71rqrnce.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.khabar"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
