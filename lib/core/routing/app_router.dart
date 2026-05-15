@@ -6,6 +6,7 @@ import 'package:khabar/features/onboarding/onboarding_screen.dart';
 
 class AppRouter {
   Route generateRoute(RouteSettings settings) {
+    /// ✅ يمكنك استخدام settings.arguments لتمرير البيانات بين الصفحات إذا لزم الأمر
     final arguments = settings.arguments;
     switch (settings.name) {
       case Routes.loginScreen:
