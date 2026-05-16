@@ -3,8 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:khabar/core/helper/extension.dart';
 import 'package:khabar/core/routing/routes.dart';
 
-class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({super.key});
+class Onboarding_screen_2nd extends StatelessWidget {
+  const Onboarding_screen_2nd({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +46,7 @@ class OnboardingScreen extends StatelessWidget {
                 ),
                 child: Center(
                   child: SvgPicture.asset(
-                    'assets/svgs/video_camera.svg',
+                    'assets/svgs/camera.svg',
                     height: 120,
                   ),
                 ),
@@ -56,7 +56,7 @@ class OnboardingScreen extends StatelessWidget {
 
               /// ✅ TITLE
               const Text(
-                "بع فيديوهاتك للقنوات العالمية",
+                "اشتري صور عاجلة فور وقوع الحدث",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
@@ -65,7 +65,7 @@ class OnboardingScreen extends StatelessWidget {
 
               /// ✅ DESCRIPTION
               const Text(
-                "حول كاميرتك إلى مصدر دخل — كل خبر تصوره قابل للبيع",
+                "آلاف المصورين الميدانيين جاهزون — احصل على المحتوى الحصري قبل أي وكالة أخرى",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -97,7 +97,7 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                   onPressed: () {
                     // push in another onboaredscreen
-                    context.pushNamed(Routes.onboarding2);
+                    context.pushNamed(Routes.onboarding3);
                   },
                   child: const Text(
                     "التالي",
