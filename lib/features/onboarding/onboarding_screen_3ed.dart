@@ -97,7 +97,7 @@ class Onboarding_screen_3ed extends StatelessWidget {
                   ),
                   onPressed: () {
                     // push in another onboaredscreen
-                    context.pushNamed(Routes.loginScreen);
+                    context.pushNamed(Routes.userTypeScreen);
                   },
                   child: const Text(
                     "التالي",

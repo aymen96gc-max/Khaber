@@ -19,6 +19,7 @@ class KhabarApp extends StatelessWidget {
         return MaterialApp(
           title: 'Khabar',
           theme: ThemeData(primarySwatch: Colors.blue),
+          locale: const Locale('ar', 'SA'), // Set Arabic locale
           onGenerateRoute: appRouter.generateRoute,
           debugShowCheckedModeBanner: false,
           initialRoute: Routes.onboarding,
