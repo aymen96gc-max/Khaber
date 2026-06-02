@@ -57,7 +57,7 @@ class OnboardingScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 15),
+              const SizedBox(height: 5),
 
               /// ✅ DESCRIPTION
               const Text(
@@ -70,7 +70,7 @@ class OnboardingScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 35),
 
               /// ✅ DOT INDICATORS
               Row(

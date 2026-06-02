@@ -29,7 +29,7 @@ class Onboarding_screen_3ed extends StatelessWidget {
                 child: Center(
                   child: SvgPicture.asset(
                     'assets/svgs/money_bag.svg',
-                    height: 120,
+                    height: 180,
                   ),
                 ),
               ),

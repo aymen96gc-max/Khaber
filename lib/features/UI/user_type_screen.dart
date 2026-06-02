@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:khabar/core/helper/extension.dart';
+import 'package:khabar/core/routing/routes.dart';
 
 class UserTypeScreen extends StatefulWidget {
   const UserTypeScreen({super.key});
@@ -24,20 +27,24 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
               SizedBox(height: 20),
 
               /// العنوان
-              Text(
-                "كيف سنستخدم التطبيق؟",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+              Center(
+                child: Text(
+                  "كيف سنستخدم التطبيق؟",
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
               ),
 
               SizedBox(height: 6),
 
-              Text(
-                "اختر نوع حسابك - يمكنك تغييره لاحقاً",
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              Center(
+                child: Text(
+                  "اختر نوع حسابك - يمكنك تغييره لاحقاً",
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
               ),
 
               SizedBox(height: 25),
@@ -50,8 +57,8 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 tags: ["حصري", "مراسل", "محتوى مميز"],
                 color: Colors.red,
                 bgColor: Color(0xFFFFF1F1),
-                iconBg: Color(0xFFFFD6D6),
-                image: "assets/svgs/camera.svg",
+                iconBg: Color(0xFFFFF1F1),
+                svgimage: "assets/svgs/camera.svg",
               ),
 
               SizedBox(height: 20),
@@ -64,8 +71,8 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 tags: ["وكالة", "قناة إعلامية"],
                 color: Colors.blue,
                 bgColor: Color(0xFFF2F8FF),
-                iconBg: Color(0xFFD6E8FF),
-                image: "assets/svgs/vedio_camera.svg",
+                iconBg: Color(0xFFF2F8FF),
+                svgimage: "assets/svgs/video_camera.svg",
               ),
 
               Spacer(),
@@ -75,16 +82,20 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 width: double.infinity,
                 height: 55,
                 child: ElevatedButton(
-                  onPressed: selectedIndex == -1 ? null : () {},
+                  onPressed: selectedIndex == -1
+                      ? null
+                      : () {
+                          context.pushNamed(Routes.loginScreen);
+                        },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF0D4C8B),
+                    backgroundColor: Color(0xFF1E4F8A),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: Text(
                     "اختر نوع الحساب أولاً",
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16, color: Colors.white),
                   ),
                 ),
               ),
@@ -105,7 +116,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
     required Color color,
     required Color bgColor,
     required Color iconBg,
-    required String image,
+    required String svgimage,
   }) {
     bool isSelected = selectedIndex == index;
 
@@ -180,7 +191,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.15),
+                              color: color.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -205,7 +216,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 color: iconBg,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Image.asset(image, color: color, width: 28, height: 28),
+              child: SvgPicture.asset(svgimage, width: 20, height: 20),
             ),
           ],
         ),

@@ -29,7 +29,7 @@ class Onboarding_screen_2nd extends StatelessWidget {
                 child: Center(
                   child: SvgPicture.asset(
                     'assets/svgs/camera.svg',
-                    height: 120,
+                    height: 180,
                   ),
                 ),
               ),
