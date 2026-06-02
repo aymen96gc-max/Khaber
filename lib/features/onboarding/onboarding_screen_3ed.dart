@@ -3,8 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:khabar/core/helper/extension.dart';
 import 'package:khabar/core/routing/routes.dart';
 
-class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({super.key});
+class Onboarding_screen_3ed extends StatelessWidget {
+  const Onboarding_screen_3ed({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +13,6 @@ class OnboardingScreen extends StatelessWidget {
 
       body: SafeArea(
         child: Padding(
-          // padding: const EdgeInsets.all(24)
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
@@ -29,7 +28,7 @@ class OnboardingScreen extends StatelessWidget {
                 ),
                 child: Center(
                   child: SvgPicture.asset(
-                    'assets/svgs/video_camera.svg',
+                    'assets/svgs/money_bag.svg',
                     height: 180,
                   ),
                 ),
@@ -39,7 +38,7 @@ class OnboardingScreen extends StatelessWidget {
 
               /// ✅ TITLE
               const Text(
-                "بع فيديوهاتك للقنوات العالمية",
+                "منصة موثوقة وآمنة للشراء والبيع",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
@@ -48,7 +47,7 @@ class OnboardingScreen extends StatelessWidget {
 
               /// ✅ DESCRIPTION
               const Text(
-                "حول كاميرتك إلى مصدر دخل",
+                "مع نظام دفع آمن وضمانات، يمكنك بيع صورك بثقة أو شراء محتوى حصري بأمان",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 16,
@@ -57,25 +56,12 @@ class OnboardingScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 5),
-
-              /// ✅ DESCRIPTION
-              const Text(
-                " كل خبر تصوره قابل للبيع",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.black54,
-                  height: 1.5,
-                ),
-              ),
-
-              const SizedBox(height: 35),
+              const SizedBox(height: 40),
 
               /// ✅ DOT INDICATORS
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [_activeDot(), _dot(), _dot()],
+                children: [_dot(), _dot(), _activeDot()],
               ),
 
               const Spacer(),
@@ -93,7 +79,7 @@ class OnboardingScreen extends StatelessWidget {
                   ),
                   onPressed: () {
                     // push in onboaredscreen 3
-                    context.pushNamed(Routes.onboarding2);
+                    context.pushNamed(Routes.userTypeScreen);
                   },
                   child: const Text(
                     "التالي",
@@ -127,6 +113,7 @@ class OnboardingScreen extends StatelessWidget {
   }
 
   Widget _activeDot() {
+    /// ✅ ACTIVE DOT
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 5),
       width: 25,
