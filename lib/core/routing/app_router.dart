@@ -15,9 +15,9 @@ class AppRouter {
     switch (settings.name) {
       /// لانشاء route بين الصفحات
       case Routes.loginScreen:
-        return MaterialPageRoute(builder: (_) => const LoginScreen());
+        return MaterialPageRoute(builder: (_) => LoginScreen());
       case Routes.userTypeScreen:
-        return MaterialPageRoute(builder: (_) => UserTypeScreen());
+        return MaterialPageRoute(builder: (_) => const UserTypeScreen());
       case Routes.signUpScreen:
         return MaterialPageRoute(builder: (_) => const SignupScreen());
       case Routes.onboarding:

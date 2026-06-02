@@ -16,32 +16,14 @@ class Onboarding_screen_3ed extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              const SizedBox(height: 30),
-
-              /// ✅ LOGO SVG
-              Column(
-                children: [
-                  SvgPicture.asset('assets/svgs/khabar_logo.svg', height: 80),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "khabar Agency",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 40),
+              const SizedBox(height: 150),
 
               /// ✅ CAMERA CARD
               Container(
                 height: 260,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFA7C3DA),
+                  color: Color.fromRGBO(13, 154, 255, 0.643),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Center(
@@ -74,7 +56,7 @@ class Onboarding_screen_3ed extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 40),
 
               /// ✅ DOT INDICATORS
               Row(
@@ -96,12 +78,16 @@ class Onboarding_screen_3ed extends StatelessWidget {
                     ),
                   ),
                   onPressed: () {
-                    // push in another onboaredscreen
+                    // push in onboaredscreen 3
                     context.pushNamed(Routes.userTypeScreen);
                   },
                   child: const Text(
                     "التالي",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -127,6 +113,7 @@ class Onboarding_screen_3ed extends StatelessWidget {
   }
 
   Widget _activeDot() {
+    /// ✅ ACTIVE DOT
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 5),
       width: 25,

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:khabar/features/UI/login_screen.dart';
 
 class UserTypeScreen extends StatefulWidget {
+  const UserTypeScreen({super.key});
+
   @override
+  // ✅ جعل الشاشة StatefulWidget لتمكين اختيار نوع المستخدم
   _UserTypeScreenState createState() => _UserTypeScreenState();
 }
 
@@ -12,127 +13,145 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: Colors.grey[200],
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
+    return Scaffold(
+      backgroundColor: Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 20),
 
-                /// Title
-                Text(
-                  "كيف ستستخدم التطبيق؟",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              /// العنوان
+              Text(
+                "كيف سنستخدم التطبيق؟",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-                const SizedBox(height: 8),
+              ),
 
-                Text(
-                  "اختر نوع حسابك - يمكنك تغييره لاحقاً",
-                  style: TextStyle(color: Colors.grey[700]),
-                ),
+              SizedBox(height: 6),
 
-                const SizedBox(height: 30),
+              Text(
+                "اختر نوع حسابك - يمكنك تغييره لاحقاً",
+                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              ),
 
-                /// Seller
-                _buildOptionCard(
-                  index: 0,
-                  title: "بائع محتوى",
-                  subtitle: "صور و فيديوهات للبيع للقنوات الإعلامية",
-                  color: Colors.red,
-                  svgPath: "assets/svgs/camera.svg",
-                  tags: ["مراسل", "مصور", "صحفي ميداني"],
-                ),
+              SizedBox(height: 25),
 
-                const SizedBox(height: 20),
+              /// بطاقة البائع
+              _buildCard(
+                index: 0,
+                title: "بائع محتوى",
+                subtitle: "صور وفيديوهات للقنوات العالمية",
+                tags: ["حصري", "مراسل", "محتوى مميز"],
+                color: Colors.red,
+                bgColor: Color(0xFFFFF1F1),
+                iconBg: Color(0xFFFFD6D6),
+                image: "assets/svgs/camera.svg",
+              ),
 
-                /// Buyer
-                _buildOptionCard(
-                  index: 1,
-                  title: "مشتري محتوى",
-                  subtitle: "اشتر فيديوهات وصور حصرية وفورية",
-                  color: Colors.blue,
-                  svgPath: "assets/svgs/video_camera.svg",
-                  tags: ["قناة", "وكالة", "منظمة إعلامية"],
-                ),
+              SizedBox(height: 20),
 
-                const Spacer(),
+              /// بطاقة المشتري
+              _buildCard(
+                index: 1,
+                title: "مشتري محتوى",
+                subtitle: "قنوات، وكالات، وصور حصرية وفورية",
+                tags: ["وكالة", "قناة إعلامية"],
+                color: Colors.blue,
+                bgColor: Color(0xFFF2F8FF),
+                iconBg: Color(0xFFD6E8FF),
+                image: "assets/svgs/vedio_camera.svg",
+              ),
 
-                /// Button
-                ElevatedButton(
-                  onPressed: selectedIndex == -1
-                      ? null
-                      : () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => LoginScreen()),
-                          );
-                        },
+              Spacer(),
+
+              /// الزر
+              SizedBox(
+                width: double.infinity,
+                height: 55,
+                child: ElevatedButton(
+                  onPressed: selectedIndex == -1 ? null : () {},
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[900],
-                    minimumSize: Size(double.infinity, 55),
+                    backgroundColor: Color(0xFF0D4C8B),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.arrow_back),
-                      SizedBox(width: 8),
-                      Text(
-                        "اختر نوع الحساب اولاً",
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ],
+                  child: Text(
+                    "اختر نوع الحساب أولاً",
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
-              ],
-            ),
+              ),
+
+              SizedBox(height: 20),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildOptionCard({
+  Widget _buildCard({
     required int index,
     required String title,
     required String subtitle,
-    required Color color,
-    required String svgPath,
     required List<String> tags,
+    required Color color,
+    required Color bgColor,
+    required Color iconBg,
+    required String image,
   }) {
     bool isSelected = selectedIndex == index;
 
     return GestureDetector(
       onTap: () {
-        setState(() => selectedIndex = index);
+        setState(() {
+          selectedIndex = index;
+        });
       },
       child: Container(
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: bgColor,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? color : color.withOpacity(0.4),
-            width: 2,
+            color: isSelected ? color : Colors.transparent,
+            width: 1.5,
           ),
         ),
         child: Row(
           children: [
             /// Radio
-            Icon(
-              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              color: color,
+            Container(
+              width: 22,
+              height: 22,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.grey),
+              ),
+              child: isSelected
+                  ? Center(
+                      child: Container(
+                        width: 12,
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    )
+                  : null,
             ),
 
-            const SizedBox(width: 12),
+            SizedBox(width: 15),
 
-            /// Text
+            /// النصوص
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -141,25 +160,33 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                     title,
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 6),
-                  Text(subtitle, style: TextStyle(color: Colors.grey[700])),
 
-                  const SizedBox(height: 10),
+                  SizedBox(height: 6),
+
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                  ),
+
+                  SizedBox(height: 10),
 
                   Wrap(
                     spacing: 6,
                     children: tags
                         .map(
-                          (e) => Container(
+                          (tag) => Container(
                             padding: EdgeInsets.symmetric(
                               horizontal: 10,
-                              vertical: 5,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(10),
+                              color: color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(e, style: TextStyle(color: color)),
+                            child: Text(
+                              tag,
+                              style: TextStyle(fontSize: 11, color: color),
+                            ),
                           ),
                         )
                         .toList(),
@@ -168,31 +195,21 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
               ),
             ),
 
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
 
-            /// SVG Icon
+            /// الأيقونة
             Container(
-              padding: EdgeInsets.all(12),
+              width: 55,
+              height: 55,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
+                color: iconBg,
+                borderRadius: BorderRadius.circular(14),
               ),
-              child: SvgPicture.asset(svgPath, width: 40, height: 40),
+              child: Image.asset(image, color: color, width: 28, height: 28),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Dummy next screen
-class NextScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text("الصفحة التالية")),
-      body: Center(child: Text("تم الانتقال بنجاح")),
     );
   }
 }
