@@ -82,7 +82,11 @@ class _LoginScreenState extends State<LoginScreen> {
             Center(
               child: Column(
                 children: [
-                  SvgPicture.asset("assets/svgs/khabar_logo.svg", height: 100),
+                  SvgPicture.asset(
+                    "assets/svgs/khabar_logo.svg",
+                    width: 100,
+                    height: 100,
+                  ),
                   const Text(
                     "تسجيل الدخول",
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),

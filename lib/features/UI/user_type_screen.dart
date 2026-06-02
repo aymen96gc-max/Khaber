@@ -31,7 +31,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 child: Text(
                   "كيف سنستخدم التطبيق؟",
                   style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 23,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
@@ -43,7 +43,10 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
               Center(
                 child: Text(
                   "اختر نوع حسابك - يمكنك تغييره لاحقاً",
-                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: const Color.fromARGB(255, 79, 78, 78),
+                  ),
                 ),
               ),
 
@@ -54,21 +57,21 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                 index: 0,
                 title: "بائع محتوى",
                 subtitle: "صور وفيديوهات للقنوات العالمية",
-                tags: ["حصري", "مراسل", "محتوى مميز"],
+                tags: ["حصري", "محتوى مميز", "مراسل"],
                 color: Colors.red,
                 bgColor: Color(0xFFFFF1F1),
                 iconBg: Color(0xFFFFF1F1),
                 svgimage: "assets/svgs/camera.svg",
               ),
 
-              SizedBox(height: 20),
+              SizedBox(height: 30),
 
               /// بطاقة المشتري
               _buildCard(
                 index: 1,
                 title: "مشتري محتوى",
                 subtitle: "قنوات، وكالات، وصور حصرية وفورية",
-                tags: ["وكالة", "قناة إعلامية"],
+                tags: ["وكالة", "منصة إعلامية", "قناة"],
                 color: Colors.blue,
                 bgColor: Color(0xFFF2F8FF),
                 iconBg: Color(0xFFF2F8FF),
@@ -108,6 +111,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
     );
   }
 
+  /// بناء بطاقة نوع المستخدم
   Widget _buildCard({
     required int index,
     required String title,
@@ -118,6 +122,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
     required Color iconBg,
     required String svgimage,
   }) {
+    /// التحقق مما إذا كانت البطاقة الحالية هي المختارة
     bool isSelected = selectedIndex == index;
 
     return GestureDetector(
@@ -137,6 +142,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
           ),
         ),
         child: Row(
+          /// ✅ بناء محتوى البطاقة باستخدام Row لاحتواء الراديو والنصوص والأيقونة
           children: [
             /// Radio
             Container(
@@ -165,24 +171,24 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
             /// النصوص
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Text(
                     title,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
 
                   SizedBox(height: 6),
 
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                    style: TextStyle(fontSize: 15, color: Colors.grey[700]),
                   ),
 
                   SizedBox(height: 10),
 
                   Wrap(
-                    spacing: 6,
+                    spacing: 8,
                     children: tags
                         .map(
                           (tag) => Container(

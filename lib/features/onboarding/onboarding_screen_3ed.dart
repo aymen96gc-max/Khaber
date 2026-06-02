@@ -23,7 +23,7 @@ class Onboarding_screen_3ed extends StatelessWidget {
                 height: 260,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Color.fromRGBO(13, 154, 255, 0.643),
+                  color: Color.fromRGBO(13, 154, 255, 0.393),
                   borderRadius: BorderRadius.circular(25),
                 ),
                 child: Center(
