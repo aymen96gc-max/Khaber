@@ -7,10 +7,6 @@ class UploadScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
-
-      // ✅ Bottom Navigation
-      bottomNavigationBar: bottomNav(),
-
       body: Padding(
         padding: const EdgeInsets.all(15),
         child: ListView(
@@ -116,21 +112,6 @@ class UploadScreen extends StatelessWidget {
         onPressed: () {},
         child: Text(text),
       ),
-    );
-  }
-
-  Widget bottomNav() {
-    return BottomNavigationBar(
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: "الرئيسية"),
-        BottomNavigationBarItem(icon: Icon(Icons.upload), label: "رفع"),
-        BottomNavigationBarItem(icon: Icon(Icons.add), label: "طلبات"),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.notifications),
-          label: "الإشعارات",
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: "حسابي"),
-      ],
     );
   }
 }

@@ -7,7 +7,6 @@ class UserTypeScreen extends StatefulWidget {
   const UserTypeScreen({super.key});
 
   @override
-  // ✅ جعل الشاشة StatefulWidget لتمكين اختيار نوع المستخدم
   _UserTypeScreenState createState() => _UserTypeScreenState();
 }
 
@@ -88,7 +87,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                   onPressed: selectedIndex == -1
                       ? null
                       : () {
-                          context.pushNamed(Routes.loginScreen);
+                          context.pushNamed(Routes.homeSwitcher);
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF1E4F8A),

@@ -1,151 +1,213 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:khabar/core/helper/extension.dart';
-import 'package:khabar/core/routing/routes.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-
-  bool isLoading = false;
-
-  Future<void> login() async {
-    try {
-      setState(() {
-        isLoading = true;
-      });
-
-      final userCredential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text.trim(),
-          );
-
-      final user = userCredential.user;
-
-      // ✅ جلب بيانات المستخدم من Firestore
-      if (user != null) {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
-        print("User Data: ${doc.data()}");
-      }
-
-      if (!context.mounted) return;
-
-      context.pushReplacementNamed(Routes.homeScreen);
-    } on FirebaseAuthException catch (e) {
-      String message = "حدث خطأ";
-
-      if (e.code == 'user-not-found') {
-        message = "المستخدم غير موجود";
-      } else if (e.code == 'wrong-password') {
-        message = "كلمة المرور خاطئة";
-      } else if (e.code == 'invalid-email') {
-        message = "البريد الإلكتروني غير صالح";
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
-    } catch (e) {
-      print(e);
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
+class LoginScreen extends StatelessWidget {
+  final VoidCallback onClickSignUp;
+  const LoginScreen({super.key, required this.onClickSignUp});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: ListView(
-          children: [
-            const SizedBox(height: 60),
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
 
-            // ✅ شعار
-            Center(
-              child: Column(
+    Future<void> login() async {
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text.trim(),
+          password: passwordController.text.trim(),
+        );
+      } on FirebaseAuthException catch (e) {
+        print("Error: ${e.message}");
+      }
+    }
+
+    return Directionality(
+      textDirection: TextDirection.rtl, // Arabic layout
+      child: Scaffold(
+        backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            children: [
+              const SizedBox(height: 60),
+
+              /// Logo + Title
+              Column(
                 children: [
-                  SvgPicture.asset(
-                    "assets/svgs/khabar_logo.svg",
-                    width: 100,
-                    height: 100,
-                  ),
+                  Image.asset("images/logo.png", height: 110, width: 100),
+                  const SizedBox(height: 10),
                   const Text(
                     "تسجيل الدخول",
-                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Color(0xFF1E4F8A),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
-            ),
 
-            const SizedBox(height: 40),
+              const SizedBox(height: 40),
 
-            const Text("البريد الالكتروني", textAlign: TextAlign.right),
-            const SizedBox(height: 10),
+              /// Email
+              buildTextField(
+                "البريد الالكتروني",
+                controller: emailController,
+                isPassword: false,
+              ),
 
-            TextField(
-              controller: emailController,
-              textAlign: TextAlign.right,
-              decoration: InputDecoration(
-                hintText: "البريد الالكتروني",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+              const SizedBox(height: 15),
+
+              /// Password
+              buildTextField(
+                "كلمة المرور",
+                controller: passwordController,
+                isPassword: true,
+              ),
+
+              const SizedBox(height: 5),
+
+              /// Forgot Password
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () {},
+                  child: const Text(
+                    "نسيت كلمة المرور؟",
+                    style: TextStyle(color: Colors.red),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 15),
 
-            const Text("كلمة المرور", textAlign: TextAlign.right),
-            const SizedBox(height: 10),
-
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              textAlign: TextAlign.right,
-              decoration: InputDecoration(
-                hintText: "كلمة المرور",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(20),
+              /// Login Button
+              SizedBox(
+                width: 250,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1E4F8A),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    "تسجيل الدخول",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(height: 25),
+              const SizedBox(height: 25),
 
-            // ✅ زر تسجيل الدخول
-            ElevatedButton(
-              onPressed: isLoading ? null : login,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
+              /// Divider (or)
+              Row(
+                children: const [
+                  Expanded(child: Divider()),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 10),
+                    child: Text("او"),
+                  ),
+                  Expanded(child: Divider()),
+                ],
               ),
-              child: isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text("تسجيل الدخول"),
-            ),
-          ],
+
+              const SizedBox(height: 20),
+
+              /// Create Account
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("ليس لديك حساب ؟ "),
+                  GestureDetector(
+                    onTap: () {
+                      onClickSignUp();
+                    },
+                    child: const Text(
+                      "انشاء حساب جديد",
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 25),
+
+              /// Social Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  socialButton("Apple", Icons.apple, () {}),
+                  socialButton("Google", Icons.email, () {}),
+                ],
+              ),
+
+              const SizedBox(height: 15),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  socialButton("Facebook", Icons.facebook, () {}),
+                  socialButton("TikTok", Icons.tiktok, () {}),
+                ],
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  /// TextField Widget
+  Widget buildTextField(
+    String hint, {
+    bool isPassword = false,
+    required TextEditingController controller,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: isPassword,
+      decoration: InputDecoration(
+        hintText: hint,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 15,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF1E4F8A)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF1E4F8A), width: 2),
+        ),
+      ),
+    );
+  }
+
+  /// Social Button
+  Widget socialButton(String title, IconData icon, VoidCallback onPressed) {
+    return SizedBox(
+      width: 140,
+      height: 50,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey[300],
+          foregroundColor: Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+        icon: Icon(icon),
+        label: Text(title),
       ),
     );
   }

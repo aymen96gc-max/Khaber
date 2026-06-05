@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class OrdersScreen extends StatelessWidget {
-  const OrdersScreen({super.key});
+class ContentScreen extends StatelessWidget {
+  const ContentScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
