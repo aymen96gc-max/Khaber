@@ -7,7 +7,8 @@ class UserTypeScreen extends StatefulWidget {
   const UserTypeScreen({super.key});
 
   @override
-  _UserTypeScreenState createState() => _UserTypeScreenState();
+  @override
+  State<UserTypeScreen> createState() => _UserTypeScreenState();
 }
 
 class _UserTypeScreenState extends State<UserTypeScreen> {
@@ -87,7 +88,13 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                   onPressed: selectedIndex == -1
                       ? null
                       : () {
-                          context.pushNamed(Routes.homeSwitcher);
+                          // Always navigate to the role-specific login screen
+                          // to force explicit login/role selection.
+                          if (selectedIndex == 0) {
+                            context.pushNamed(Routes.salerLoginScreen);
+                          } else if (selectedIndex == 1) {
+                            context.pushNamed(Routes.buyerLoginScreen);
+                          }
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF1E4F8A),

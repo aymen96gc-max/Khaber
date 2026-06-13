@@ -1,17 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class SignupScreen extends StatefulWidget {
+class SalerSignupScreen extends StatefulWidget {
   final VoidCallback onClickSignIn;
-  const SignupScreen({required this.onClickSignIn, super.key});
+  const SalerSignupScreen({required this.onClickSignIn, super.key});
 
   @override
-  State<SignupScreen> createState() => _SignupScreenState();
+  State<SalerSignupScreen> createState() => _SalerSignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
+class _SalerSignupScreenState extends State<SalerSignupScreen> {
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -22,13 +22,26 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future Signup() async {
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text.trim(),
-      );
+      UserCredential user = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text.trim(),
+          );
+      storeData();
     } on FirebaseAuthException catch (e) {
       print("Error: ${e.message}");
     }
+  }
+
+  Future storeData() async {
+    await FirebaseFirestore.instance.collection('users').add({
+      "firstName": firstNameController.text.trim(),
+      "lastName": lastNameController.text.trim(),
+      "email": emailController.text.trim(),
+      "phone": phoneController.text.trim(),
+      "country": countryController.text.trim(),
+      "city": cityController.text.trim(),
+    });
   }
 
   @override

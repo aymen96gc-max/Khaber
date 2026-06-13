@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:khabar/features/UI/home_screen.dart';
-import 'package:khabar/features/UI/notification.dart';
-import 'package:khabar/features/UI/orders_screen.dart';
-import 'package:khabar/features/UI/profile.dart';
-import 'package:khabar/features/UI/upload_screen.dart';
+import 'package:khabar/features/UI/saler/saler_content.dart';
+import 'package:khabar/features/UI/saler/saler_home_screen.dart';
+import 'package:khabar/features/UI/saler/saler_notificitoin.dart';
+import 'package:khabar/features/UI/saler/saler_profile_screen.dart';
+import 'package:khabar/features/UI/saler/saler_upload_screen.dart';
 
-class BottomSwitcher extends StatefulWidget {
-  const BottomSwitcher({super.key});
+class SalerBottomSwitcher extends StatefulWidget {
+  const SalerBottomSwitcher({super.key});
 
   @override
-  State<BottomSwitcher> createState() => _BottomSwitcherState();
+  State<SalerBottomSwitcher> createState() => _SalerBottomSwitcherState();
 }
 
-class _BottomSwitcherState extends State<BottomSwitcher> {
+class _SalerBottomSwitcherState extends State<SalerBottomSwitcher> {
   int currentIndex = 0;
 
   final List<Widget> screens = [
-    HomeScreen(),
-    UploadScreen(), // UploadScreen
-    OrdersScreen(), // OrdersScreen
-    NotificationsScreen(), // NotificationsScreen
-    ProfileScreen(), // ProfileScreen
+    SalerHomeScreen(),
+    SalerUploadScreen(), // UploadScreen
+    SalerContentScreen(), // OrdersScreen
+    SalerNotificationsScreen(), // NotificationsScreen
+    SalerProfileScreen(), // ProfileScreen
   ];
 
   @override

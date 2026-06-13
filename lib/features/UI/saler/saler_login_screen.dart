@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:khabar/core/routing/routes.dart';
 
-class LoginScreen extends StatelessWidget {
+class SalerLoginScreen extends StatelessWidget {
   final VoidCallback onClickSignUp;
-  const LoginScreen({super.key, required this.onClickSignUp});
+  const SalerLoginScreen({super.key, required this.onClickSignUp});
 
   @override
   Widget build(BuildContext context) {
@@ -16,6 +17,10 @@ class LoginScreen extends StatelessWidget {
           email: emailController.text.trim(),
           password: passwordController.text.trim(),
         );
+        // Navigate to home after successful login
+        if (context.mounted) {
+          Navigator.of(context).pushReplacementNamed(Routes.salerhomeSwitcher);
+        }
       } on FirebaseAuthException catch (e) {
         print("Error: ${e.message}");
       }

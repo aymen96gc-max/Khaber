@@ -3,15 +3,21 @@ class Routes {
   static const String onboarding2 = '/onboarding2';
   static const String onboarding3 = '/onboarding3';
   static const String userTypeScreen = '/userTypeScreen';
-  static const String homeSwitcher = '/homeSwitcher';
-  static const String loginScreen = '/loginScreen';
-  static const String signUpScreen = '/signUpScreen';
-  static const String homeScreen = '/homeScreen';
-  static const String uploadScreen = '/uploadScreen';
-  static const String orderScreen = '/orderScreen';
-  static const String massegeScreen = '/massegeScreen';
-  static const String profileScreen = '/profileScreen';
-  static const String notifications = '/notifications';
-  static const String salesScreen = '/salesScreen';
-  static const String contentScreen = '/contentScreen';
+  static const String salerhomeSwitcher = '/salerhomeSwitcher';
+  static const String salerLoginScreen = '/salerLoginScreen';
+  static const String salerUploadScreen = '/salerUploadScreen';
+  static const String salerNotificationScreen = '/salerNotificationScreen';
+  static const String salerSignupScreen = '/salerSignupScreen';
+  static const String salersearchScreen = '/salersearchScreen';
+  static const String salerprofileScreen = '/salerprofileScreen';
+  static const String salerhomeScreen = '/salerhomeScreen';
+
+  static const String buyerhomeSwitcher = '/buyerhomeSwitcher';
+  static const String buyerPreferredScreen = '/buyerPreferredScreen';
+  static const String buyerPurchasesScreen = '/buyerPurchasesScreen';
+  static const String buyerLoginScreen = '/buyerLoginScreen';
+  static const String buyerSignupScreen = '/buyerSignupScreen';
+  static const String buyersearchScreen = '/buyersearchScreen';
+  static const String buyerprofileScreen = '/buyerprofileScreen';
+  static const String buyerhomeScreen = '/buyerhomeScreen';
 }
