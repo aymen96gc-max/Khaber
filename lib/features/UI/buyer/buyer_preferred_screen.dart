@@ -38,10 +38,10 @@ class BuyerPreferredScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: const [
-                    tabItem("الكل", true),
-                    tabItem("فيديو", false),
-                    tabItem("صور", false),
-                    tabItem("حصري", false),
+                    TabItem("الكل", true),
+                    TabItem("فيديو", false),
+                    TabItem("صور", false),
+                    TabItem("حصري", false),
                   ],
                 ),
               ),
@@ -53,9 +53,9 @@ class BuyerPreferredScreen extends StatelessWidget {
                 color: const Color(0xffE6D9C5),
                 child: Row(
                   children: const [
-                    statBox("\$3,240", "إجمالي"),
-                    statBox("3", "حصري"),
-                    statBox("7", "محفوظات"),
+                    StatBox("\$3,240", "إجمالي"),
+                    StatBox("3", "حصري"),
+                    StatBox("7", "محفوظات"),
                   ],
                 ),
               ),
@@ -80,11 +80,11 @@ class BuyerPreferredScreen extends StatelessWidget {
 }
 
 /// TAB
-class tabItem extends StatelessWidget {
+class TabItem extends StatelessWidget {
   final String text;
   final bool active;
 
-  const tabItem(this.text, this.active, {super.key});
+  const TabItem(this.text, this.active, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -105,11 +105,11 @@ class tabItem extends StatelessWidget {
 }
 
 /// STAT BOX
-class statBox extends StatelessWidget {
+class StatBox extends StatelessWidget {
   final String value;
   final String label;
 
-  const statBox(this.value, this.label, {super.key});
+  const StatBox(this.value, this.label, {super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -15,9 +15,9 @@ class _BuyerAuthScreenState extends State<BuyerAuthScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLogin) {
-      return BuyerLoginScreen(onClickSignUp: toggleScreen);
+      return BuyerLoginScreen(onClickSignUpBuyer: toggleScreen);
     } else {
-      return BuyerSignupScreen(onClickSignIn: toggleScreen);
+      return BuyerSignupScreen(onClickSignInBuyer: toggleScreen);
     }
   }
 }

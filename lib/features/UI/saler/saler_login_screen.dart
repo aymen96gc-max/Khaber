@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:khabar/core/routing/routes.dart';
 
 class SalerLoginScreen extends StatelessWidget {
-  final VoidCallback onClickSignUp;
-  const SalerLoginScreen({super.key, required this.onClickSignUp});
+  final VoidCallback onClickSignUpSaler;
+  const SalerLoginScreen({super.key, required this.onClickSignUpSaler});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +22,11 @@ class SalerLoginScreen extends StatelessWidget {
           Navigator.of(context).pushReplacementNamed(Routes.salerhomeSwitcher);
         }
       } on FirebaseAuthException catch (e) {
-        print("Error: ${e.message}");
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Error: ${e.message}")));
+        }
       }
     }
 
@@ -39,7 +43,11 @@ class SalerLoginScreen extends StatelessWidget {
               /// Logo + Title
               Column(
                 children: [
-                  Image.asset("images/logo.png", height: 110, width: 100),
+                  SizedBox(
+                    width: 100,
+                    height: 80,
+                    child: Image.asset("assets/images/logo.png"),
+                  ),
                   const SizedBox(height: 10),
                   const Text(
                     "تسجيل الدخول",
@@ -128,7 +136,7 @@ class SalerLoginScreen extends StatelessWidget {
                   const Text("ليس لديك حساب ؟ "),
                   GestureDetector(
                     onTap: () {
-                      onClickSignUp();
+                      onClickSignUpSaler();
                     },
                     child: const Text(
                       "انشاء حساب جديد",

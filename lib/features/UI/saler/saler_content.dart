@@ -51,10 +51,10 @@ class SalerContentScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    tabItem("الكل (14)", true),
-                    tabItem("مباع (5)", false),
-                    tabItem("مشاهدات (55)", false),
-                    tabItem("أرباح (\$255)", false),
+                    TabItem("الكل (14)", true),
+                    TabItem("مباع (5)", false),
+                    TabItem("مشاهدات (55)", false),
+                    TabItem("أرباح (\$255)", false),
                   ],
                 ),
               ),
@@ -97,10 +97,10 @@ class SalerContentScreen extends StatelessWidget {
 }
 
 /// TAB
-class tabItem extends StatelessWidget {
+class TabItem extends StatelessWidget {
   final String text;
   final bool active;
-  const tabItem(this.text, this.active, {super.key});
+  const TabItem(this.text, this.active, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -159,18 +159,18 @@ class ContentCard extends StatelessWidget {
               right: 10,
               child: Row(
                 children: [
-                  label("حصري", Colors.red),
+                  Label("حصري", Colors.red),
                   const SizedBox(width: 6),
-                  label("مباع", Colors.green),
+                  Label("مباع", Colors.green),
                 ],
               ),
             ),
 
             /// duration
-            Positioned(bottom: 8, left: 8, child: smallTag("5:10")),
+            Positioned(bottom: 8, left: 8, child: SmallTag("5:10")),
 
             /// views
-            Positioned(bottom: 8, right: 8, child: smallTag("200")),
+            Positioned(bottom: 8, right: 8, child: SmallTag("200")),
           ],
         ),
 
@@ -228,10 +228,10 @@ class ContentCard extends StatelessWidget {
 }
 
 /// LABEL
-class label extends StatelessWidget {
+class Label extends StatelessWidget {
   final String text;
   final Color color;
-  const label(this.text, this.color, {super.key});
+  const Label(this.text, this.color, {super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -250,9 +250,9 @@ class label extends StatelessWidget {
 }
 
 /// SMALL TAG
-class smallTag extends StatelessWidget {
+class SmallTag extends StatelessWidget {
   final String text;
-  const smallTag(this.text, {super.key});
+  const SmallTag(this.text, {super.key});
 
   @override
   Widget build(BuildContext context) {

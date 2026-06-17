@@ -106,7 +106,7 @@ class SalerProfileScreen extends StatelessWidget {
                     Switch(
                       value: true,
                       onChanged: (v) {},
-                      activeColor: Colors.blue,
+                      activeThumbColor: Colors.blue,
                     ),
                     const Spacer(),
                     const Text("تفعيل الوضع الداكن"),
@@ -175,7 +175,7 @@ class SalerProfileScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(blurRadius: 6, color: Colors.black.withOpacity(0.05)),
+          BoxShadow(blurRadius: 6, color: Colors.black.withValues(alpha: 0.05)),
         ],
       ),
       child: child,

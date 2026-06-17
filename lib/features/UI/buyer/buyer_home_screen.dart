@@ -1,7 +1,36 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class BuyerHomeScreen extends StatelessWidget {
+class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
+
+  @override
+  State<BuyerHomeScreen> createState() => _BuyerHomeScreenState();
+}
+
+class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
+  String? name;
+
+  void initState() {
+    super.initState();
+    fetchUser();
+  }
+
+  Future<void> fetchUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection("buyers")
+          .doc(user.uid)
+          .get();
+
+      setState(() {
+        name = doc['name'];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,15 +63,9 @@ class BuyerHomeScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const CircleAvatar(
-                                radius: 22,
-                                backgroundImage: NetworkImage(
-                                  "https://i.pravatar.cc/150?img=10",
-                                ),
-                              ),
                               const SizedBox(width: 10),
-                              const Text(
-                                "وكالة خبر",
+                              Text(
+                                "مرحباً، ${name ?? ""}",
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,

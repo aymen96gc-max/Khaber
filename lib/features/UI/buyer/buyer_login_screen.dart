@@ -1,10 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:khabar/core/routing/routes.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class BuyerLoginScreen extends StatelessWidget {
-  final VoidCallback onClickSignUp;
-  const BuyerLoginScreen({super.key, required this.onClickSignUp});
+  final VoidCallback onClickSignUpBuyer;
+  const BuyerLoginScreen({super.key, required this.onClickSignUpBuyer});
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +23,11 @@ class BuyerLoginScreen extends StatelessWidget {
           Navigator.of(context).pushReplacementNamed(Routes.buyerhomeSwitcher);
         }
       } on FirebaseAuthException catch (e) {
-        print("Error: ${e.message}");
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Error: ${e.message}")));
+        }
       }
     }
 
@@ -39,7 +44,11 @@ class BuyerLoginScreen extends StatelessWidget {
               /// Logo + Title
               Column(
                 children: [
-                  Image.asset("images/logo.png", height: 110, width: 100),
+                  SizedBox(
+                    width: 100,
+                    height: 80,
+                    child: Image.asset("assets/images/logo.png"),
+                  ),
                   const SizedBox(height: 10),
                   const Text(
                     "تسجيل الدخول",
@@ -128,7 +137,7 @@ class BuyerLoginScreen extends StatelessWidget {
                   const Text("ليس لديك حساب ؟ "),
                   GestureDetector(
                     onTap: () {
-                      onClickSignUp();
+                      onClickSignUpBuyer();
                     },
                     child: const Text(
                       "انشاء حساب جديد",

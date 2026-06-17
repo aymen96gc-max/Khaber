@@ -23,13 +23,13 @@ class AppRouter {
       case Routes.onboarding:
         return MaterialPageRoute(builder: (_) => OnboardingScreen());
       case Routes.onboarding2:
-        return MaterialPageRoute(builder: (_) => Onboarding_screen_2nd());
+        return MaterialPageRoute(builder: (_) => OnboardingScreen2nd());
       case Routes.onboarding3:
-        return MaterialPageRoute(builder: (_) => Onboarding_screen_3ed());
+        return MaterialPageRoute(builder: (_) => OnboardingScreen3ed());
       case Routes.salerLoginScreen:
         return MaterialPageRoute(
           builder: (context) => SalerLoginScreen(
-            onClickSignUp: () =>
+            onClickSignUpSaler: () =>
                 Navigator.of(context).pushNamed(Routes.salerSignupScreen),
           ),
         );
@@ -37,20 +37,20 @@ class AppRouter {
       case Routes.buyerLoginScreen:
         return MaterialPageRoute(
           builder: (context) => BuyerLoginScreen(
-            onClickSignUp: () =>
+            onClickSignUpBuyer: () =>
                 Navigator.of(context).pushNamed(Routes.buyerSignupScreen),
           ),
         );
       case Routes.salerSignupScreen:
         return MaterialPageRoute(
           builder: (context) => SalerSignupScreen(
-            onClickSignIn: () => Navigator.of(context).pop(),
+            onClickSignInSaler: () => Navigator.of(context).pop(),
           ),
         );
       case Routes.buyerSignupScreen:
         return MaterialPageRoute(
           builder: (context) => BuyerSignupScreen(
-            onClickSignIn: () => Navigator.of(context).pop(),
+            onClickSignInBuyer: () => Navigator.of(context).pop(),
           ),
         );
 

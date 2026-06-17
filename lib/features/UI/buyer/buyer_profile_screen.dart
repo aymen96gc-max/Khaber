@@ -1,8 +1,90 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class BuyerProfileScreen extends StatelessWidget {
+class BuyerProfileScreen extends StatefulWidget {
   const BuyerProfileScreen({super.key});
+
+  @override
+  State<BuyerProfileScreen> createState() => _BuyerProfileScreenState();
+
+  /// SECTION TITLE + ITEMS
+  static Widget section(String title, List<Widget> items) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: 4, bottom: 6),
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              color: Colors.blue,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        cardContainer(child: Column(children: items)),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  /// ITEM ROW
+  static Widget item(IconData icon, String text) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: Colors.blue),
+      title: Text(text, textAlign: TextAlign.right),
+    );
+  }
+
+
+  /// CARD CONTAINER
+  static Widget cardContainer({required Widget child}) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(blurRadius: 6, color: Colors.black.withValues(alpha: 0.05)),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _BuyerProfileScreenState extends State<BuyerProfileScreen> {
+  
+  String? name;
+  String? email;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection("buyers")
+          .doc(user.uid)
+          .get();
+
+      if (doc.exists) {
+        setState(() {
+          name = doc['name'];
+          email = doc['email'];
+        });
+      }
+    }
+
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +111,7 @@ class BuyerProfileScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               /// PROFILE CARD
-              cardContainer(
+              BuyerProfileScreen.cardContainer(
                 child: Row(
                   children: [
                     const CircleAvatar(
@@ -43,7 +125,7 @@ class BuyerProfileScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         const Text(
-                          "أنس شابط",
+                          name != null && name!.isNotEmpty ? name! : "جاري التحميل...",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -80,33 +162,33 @@ class BuyerProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              section("حسابي", [
-                item(Icons.person, "البيانات الشخصية"),
-                item(Icons.email, "تحديث البريد الإلكتروني"),
-                item(Icons.lock, "تغيير كلمة البريد"),
+              BuyerProfileScreen.section("حسابي", [
+                BuyerProfileScreen.item(Icons.person, "البيانات الشخصية"),
+                BuyerProfileScreen.item(Icons.email, "تحديث البريد الإلكتروني"),
+                BuyerProfileScreen.item(Icons.lock, "تغيير كلمة البريد"),
               ]),
 
-              section("الإعدادات", [
-                item(Icons.settings, "تعديل المصادر"),
-                item(Icons.text_fields, "حجم خط العناوين"),
-                item(Icons.play_circle, "التشغيل التلقائي للفيديو"),
+              BuyerProfileScreen.section("الإعدادات", [
+                BuyerProfileScreen.item(Icons.settings, "تعديل المصادر"),
+                BuyerProfileScreen.item(Icons.text_fields, "حجم خط العناوين"),
+                BuyerProfileScreen.item(Icons.play_circle, "التشغيل التلقائي للفيديو"),
               ]),
 
-              section("الإشعارات", [
-                item(Icons.notifications, "الأخبار العاجلة"),
-                item(Icons.markunread, "اشعار اهم الأخبار"),
-                item(Icons.volume_up, "صوت الاشعارات"),
-                item(Icons.bookmark, "المواضيع المحفوظة"),
+              BuyerProfileScreen.section("الإشعارات", [
+                BuyerProfileScreen.item(Icons.notifications, "الأخبار العاجلة"),
+                BuyerProfileScreen.item(Icons.markunread, "اشعار اهم الأخبار"),
+                BuyerProfileScreen.item(Icons.volume_up, "صوت الاشعارات"),
+                BuyerProfileScreen.item(Icons.bookmark, "المواضيع المحفوظة"),
               ]),
 
               /// DARK MODE
-              cardContainer(
+              BuyerProfileScreen.cardContainer(
                 child: Row(
                   children: [
                     Switch(
                       value: true,
                       onChanged: (v) {},
-                      activeColor: Colors.blue,
+                      activeThumbColor: Colors.blue,
                     ),
                     const Spacer(),
                     const Text("تفعيل الوضع الداكن"),
@@ -116,69 +198,22 @@ class BuyerProfileScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              section("تطبيق خبر", [
-                item(Icons.publish, "انشر تطبيق خبر"),
-                item(Icons.phone, "الاتصال بنا"),
-                item(Icons.facebook, "Khaber app"),
-                item(Icons.camera_alt, "Khaber app"),
-                item(Icons.music_note, "Khaber app"),
-                item(Icons.thumb_up, "قيم تطبيق خبر"),
-                item(Icons.help, "الاسئلة الشائعة"),
-                item(Icons.report_problem, "الابلاغ عن خلل"),
-                item(Icons.privacy_tip, "سياسة الخصوصية"),
-                item(Icons.gavel, "شروط الاستخدام"),
+              BuyerProfileScreen.section("تطبيق خبر", [
+                BuyerProfileScreen.item(Icons.publish, "انشر تطبيق خبر"),
+                BuyerProfileScreen.item(Icons.phone, "الاتصال بنا"),
+                BuyerProfileScreen.item(Icons.facebook, "Khaber app"),
+                BuyerProfileScreen.item(Icons.camera_alt, "Khaber app"),
+                BuyerProfileScreen.item(Icons.music_note, "Khaber app"),
+                BuyerProfileScreen.item(Icons.thumb_up, "قيم تطبيق خبر"),
+                BuyerProfileScreen.item(Icons.help, "الاسئلة الشائعة"),
+                BuyerProfileScreen.item(Icons.report_problem, "الابلاغ عن خلل"),
+                BuyerProfileScreen.item(Icons.privacy_tip, "سياسة الخصوصية"),
+                BuyerProfileScreen.item(Icons.gavel, "شروط الاستخدام"),
               ]),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  /// SECTION TITLE + ITEMS
-  static Widget section(String title, List<Widget> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 4, bottom: 6),
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              color: Colors.blue,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        cardContainer(child: Column(children: items)),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  /// ITEM ROW
-  static Widget item(IconData icon, String text) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(icon, color: Colors.blue),
-      title: Text(text, textAlign: TextAlign.right),
-    );
-  }
-
-  /// CARD CONTAINER
-  static Widget cardContainer({required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(blurRadius: 6, color: Colors.black.withOpacity(0.05)),
-        ],
-      ),
-      child: child,
     );
   }
 }

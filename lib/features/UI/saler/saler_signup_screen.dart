@@ -2,10 +2,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:khabar/core/routing/routes.dart';
 
 class SalerSignupScreen extends StatefulWidget {
-  final VoidCallback onClickSignIn;
-  const SalerSignupScreen({required this.onClickSignIn, super.key});
+  final VoidCallback onClickSignInSaler;
+  const SalerSignupScreen({required this.onClickSignInSaler, super.key});
 
   @override
   State<SalerSignupScreen> createState() => _SalerSignupScreenState();
@@ -20,28 +21,52 @@ class _SalerSignupScreenState extends State<SalerSignupScreen> {
   TextEditingController cityController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  Future Signup() async {
+  Future<void> signup() async {
     try {
-      UserCredential user = await FirebaseAuth.instance
+      // Create Firebase account (auto-logs in user)
+      UserCredential salerCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
             email: emailController.text.trim(),
             password: passwordController.text.trim(),
           );
-      storeData();
+
+      await FirebaseFirestore.instance
+          .collection("salers")
+          .doc(salerCredential.user?.uid)
+          .set({
+            "firstName": firstNameController.text.trim(),
+            "lastName": lastNameController.text.trim(),
+            "email": emailController.text.trim(),
+            "phone": phoneController.text.trim(),
+            "country": countryController.text.trim(),
+            "city": cityController.text.trim(),
+            "createdAt": FieldValue.serverTimestamp(),
+          });
     } on FirebaseAuthException catch (e) {
-      print("Error: ${e.message}");
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Sign up error: ${e.message}")));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Firestore save error: ${e.toString()}")),
+        );
+      }
     }
   }
 
-  Future storeData() async {
-    await FirebaseFirestore.instance.collection('users').add({
-      "firstName": firstNameController.text.trim(),
-      "lastName": lastNameController.text.trim(),
-      "email": emailController.text.trim(),
-      "phone": phoneController.text.trim(),
-      "country": countryController.text.trim(),
-      "city": cityController.text.trim(),
-    });
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    countryController.dispose();
+    cityController.dispose();
+    passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -61,7 +86,7 @@ class _SalerSignupScreenState extends State<SalerSignupScreen> {
                   children: [
                     InkWell(
                       onTap: () {
-                        widget.onClickSignIn();
+                        widget.onClickSignInSaler();
                       },
                       child: const Icon(Icons.arrow_back),
                     ),
@@ -180,7 +205,7 @@ class _SalerSignupScreenState extends State<SalerSignupScreen> {
                       ),
                     ),
                     onPressed: () {
-                      Signup();
+                      signup();
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,

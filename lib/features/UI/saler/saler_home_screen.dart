@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:khabar/core/routing/routes.dart';
 
 class SalerHomeScreen extends StatelessWidget {
   const SalerHomeScreen({super.key});
@@ -72,7 +71,7 @@ class SalerHomeScreen extends StatelessWidget {
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
+                          color: Colors.white.withValues(alpha: 0.08),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -220,7 +219,7 @@ class SalerHomeScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: i == 0
                             ? Colors.redAccent
-                            : Colors.redAccent.withOpacity(0.7),
+                            : Colors.redAccent.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
@@ -310,7 +309,7 @@ class SalerHomeScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.2),
+            color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(16),
           ),
           child: icon,

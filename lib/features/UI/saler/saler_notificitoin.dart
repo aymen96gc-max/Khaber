@@ -151,7 +151,7 @@ class SalerNotificationsScreen extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 6),
         ],
       ),
       child: Column(
@@ -165,7 +165,7 @@ class SalerNotificationsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color),
@@ -192,6 +192,7 @@ class SalerNotificationsScreen extends StatelessWidget {
               ),
 
               /// TRAILING
+              // ignore: use_null_aware_elements
               if (trailing != null) trailing,
             ],
           ),
@@ -208,7 +209,7 @@ class SalerNotificationsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(text, style: TextStyle(color: color, fontSize: 12)),

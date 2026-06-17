@@ -15,9 +15,9 @@ class _SalerAuthScreenState extends State<SalerAuthScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLogin) {
-      return SalerLoginScreen(onClickSignUp: toggleScreen);
+      return SalerLoginScreen(onClickSignUpSaler: toggleScreen);
     } else {
-      return SalerSignupScreen(onClickSignIn: toggleScreen);
+      return SalerSignupScreen(onClickSignInSaler: toggleScreen);
     }
   }
 }

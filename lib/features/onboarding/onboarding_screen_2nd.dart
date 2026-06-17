@@ -3,8 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:khabar/core/helper/extension.dart';
 import 'package:khabar/core/routing/routes.dart';
 
-class Onboarding_screen_2nd extends StatelessWidget {
-  const Onboarding_screen_2nd({super.key});
+class OnboardingScreen2nd extends StatelessWidget {
+  const OnboardingScreen2nd({super.key});
 
   @override
   Widget build(BuildContext context) {

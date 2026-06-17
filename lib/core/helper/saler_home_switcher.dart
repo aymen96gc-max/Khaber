@@ -9,15 +9,16 @@ class SalerHomeSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: StreamBuilder(
+      body: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
-
-        builder: (builder, snapshot) {
-          if (snapshot.hasData) {
-            return SalerBottomSwitcher(); // Replace with your home screen widget
-          } else {
-            return SalerAuthScreen(); // Replace with your login screen widget
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasData && snapshot.data != null) {
+            return SalerBottomSwitcher();
+          }
+          return SalerAuthScreen();
         },
       ),
     );
