@@ -7,8 +7,8 @@ class UserTypeScreen extends StatefulWidget {
   const UserTypeScreen({super.key});
 
   @override
-  // ✅ جعل الشاشة StatefulWidget لتمكين اختيار نوع المستخدم
-  _UserTypeScreenState createState() => _UserTypeScreenState();
+  @override
+  State<UserTypeScreen> createState() => _UserTypeScreenState();
 }
 
 class _UserTypeScreenState extends State<UserTypeScreen> {
@@ -88,7 +88,13 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                   onPressed: selectedIndex == -1
                       ? null
                       : () {
-                          context.pushNamed(Routes.loginScreen);
+                          // Always navigate to the role-specific login screen
+                          // to force explicit login/role selection.
+                          if (selectedIndex == 0) {
+                            context.pushNamed(Routes.salerLoginScreen);
+                          } else if (selectedIndex == 1) {
+                            context.pushNamed(Routes.buyerLoginScreen);
+                          }
                         },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFF1E4F8A),
@@ -197,7 +203,7 @@ class _UserTypeScreenState extends State<UserTypeScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
+                              color: color.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(

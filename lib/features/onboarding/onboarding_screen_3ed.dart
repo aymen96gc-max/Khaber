@@ -2,9 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:khabar/core/helper/extension.dart';
 import 'package:khabar/core/routing/routes.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class Onboarding_screen_3ed extends StatelessWidget {
-  const Onboarding_screen_3ed({super.key});
+class OnboardingScreen3ed extends StatefulWidget {
+  const OnboardingScreen3ed({super.key});
+
+  @override
+  State<OnboardingScreen3ed> createState() => _OnboardingScreen3edState();
+}
+
+class _OnboardingScreen3edState extends State<OnboardingScreen3ed> {
+  Future<void> _completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('hasSeenOnboarding', true);
+    if (mounted) {
+      context.pushNamed(Routes.userTypeScreen);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,10 +91,7 @@ class Onboarding_screen_3ed extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                   ),
-                  onPressed: () {
-                    // push in onboaredscreen 3
-                    context.pushNamed(Routes.userTypeScreen);
-                  },
+                  onPressed: _completeOnboarding,
                   child: const Text(
                     "التالي",
                     style: TextStyle(
