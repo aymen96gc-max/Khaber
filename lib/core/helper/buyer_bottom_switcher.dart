@@ -17,7 +17,7 @@ class _BuyerBottomSwitcherState extends State<BuyerBottomSwitcher> {
 
   final List<Widget> screens = [
     BuyerHomeScreen(),
-    BuyerSearchScreen(),
+    BuyerSearchScreen(searchText: '', products: []),
     BuyerPreferredScreen(), // BuyerContentScreen
     BuyerPurchasesScreen(), // BuyerNotificationsScreen
     BuyerProfileScreen(), // BuyerProfileScreen
@@ -30,10 +30,10 @@ class _BuyerBottomSwitcherState extends State<BuyerBottomSwitcher> {
 
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
-        selectedItemColor: Colors.red,
+        selectedItemColor: Color.fromARGB(255, 0, 42, 77),
         unselectedItemColor: Colors.black,
 
-        type: BottomNavigationBarType.fixed, // ✅ مهم مع 5 عناصر
+        type: BottomNavigationBarType.fixed,
 
         onTap: (index) {
           setState(() {

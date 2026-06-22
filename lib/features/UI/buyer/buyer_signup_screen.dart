@@ -332,8 +332,6 @@ class _BuyerSignupScreenState extends State<BuyerSignupScreen> {
         throw Exception("User not created");
       }
 
-      print("✅ UID: ${user.uid}");
-
       await FirebaseFirestore.instance.collection("buyers").doc(user.uid).set({
         "name": nameController.text.trim(),
         "email": user.email,
@@ -343,7 +341,6 @@ class _BuyerSignupScreenState extends State<BuyerSignupScreen> {
         "employees": employeesController.text.trim(),
         "createdAt": FieldValue.serverTimestamp(),
       });
-      print("✅ Data saved");
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -351,8 +348,6 @@ class _BuyerSignupScreenState extends State<BuyerSignupScreen> {
         );
       }
     } catch (e) {
-      print("❌ ERROR: $e");
-
       if (mounted) {
         ScaffoldMessenger.of(
           context,

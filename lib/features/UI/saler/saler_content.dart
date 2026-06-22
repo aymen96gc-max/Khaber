@@ -1,7 +1,36 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:khabar/core/helper/firebase_sarvices_product.dart';
 import 'package:flutter/material.dart';
+import 'package:khabar/features/UI/buyer/buyer_purchases_screen.dart';
 
-class SalerContentScreen extends StatelessWidget {
+
+class SalerContentScreen extends StatefulWidget {
   const SalerContentScreen({super.key});
+
+  @override
+  State<SalerContentScreen> createState() => _SalerContentScreenState();
+}
+
+class _SalerContentScreenState extends State<SalerContentScreen> {
+  final ProductService productService = ProductService();
+
+  List<DocumentSnapshot> products = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts() async {
+    final docs = await productService.fetchProducts();
+
+    setState(() {
+      products = docs;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +41,6 @@ class SalerContentScreen extends StatelessWidget {
           textDirection: TextDirection.rtl,
           child: Column(
             children: [
-              /// HEADER
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -42,7 +70,6 @@ class SalerContentScreen extends StatelessWidget {
                 ),
               ),
 
-              /// TABS
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: const BoxDecoration(
@@ -51,15 +78,14 @@ class SalerContentScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    TabItem("الكل (14)", true),
-                    TabItem("مباع (5)", false),
-                    TabItem("مشاهدات (55)", false),
-                    TabItem("أرباح (\$255)", false),
+                    TabItem("الكل", true),
+                    TabItem("مباع", false),
+                    TabItem("مشاهدات", false),
+                    TabItem("أرباح", false),
                   ],
                 ),
               ),
 
-              /// SEARCH
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextField(
@@ -75,18 +101,22 @@ class SalerContentScreen extends StatelessWidget {
                 ),
               ),
 
-              /// LIST
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: const [
-                    ContentCard(),
-                    SizedBox(height: 16),
-                    ContentCard(),
-                    SizedBox(height: 16),
-                    ContentCard(),
-                  ],
-                ),
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final data =
+                              products[index].data() as Map<String, dynamic>;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: ContentCard(data: data),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -96,10 +126,144 @@ class SalerContentScreen extends StatelessWidget {
   }
 }
 
+class ContentCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+
+  const ContentCard({super.key, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                data["image"] ?? "",
+                height: 170,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) {
+                  return Container(
+                    height: 170,
+                    width: double.infinity,
+                    color: Colors.grey.shade300,
+                    child: const Icon(Icons.image, size: 50),
+                  );
+                },
+              ),
+            ),
+
+            if (data["type"] == "video")
+              const Positioned.fill(
+                child: Center(
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Colors.black54,
+                    child: Icon(
+                      Icons.play_arrow,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Row(
+                children: [
+                  Label("حصري", Colors.red),
+                  const SizedBox(width: 6),
+                  Label("مباع", Colors.green),
+                ],
+              ),
+            ),
+
+            Positioned(bottom: 8, left: 8, child: SmallTag(data["type"] ?? "")),
+
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: SmallTag(data["region"] ?? ""),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        Text(data["region"] ?? "", style: const TextStyle(color: Colors.red)),
+
+        const SizedBox(height: 4),
+
+        Text(
+          data["title"] ?? "",
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+
+        const SizedBox(height: 6),
+
+        Row(
+          children: [
+            const Icon(Icons.location_on, size: 16, color: Colors.red),
+            Text(data["region"] ?? ""),
+
+            const Spacer(),
+
+            const Icon(Icons.access_time, size: 16, color: Colors.blue),
+
+            Text(
+              data["createdAt"] != null
+                  ? (data["createdAt"] as Timestamp)
+                        .toDate()
+                        .toString()
+                        .substring(0, 10)
+                  : "",
+            ),
+
+            const Spacer(),
+
+            const Icon(Icons.tv, size: 16),
+
+            Text(data["type"] ?? ""),
+          ],
+        ),
+
+        const SizedBox(height: 12),
+
+        Row(
+          children: [
+            const Icon(Icons.more_horiz),
+
+            const SizedBox(width: 10),
+
+            OutlinedButton(onPressed: () {}, child: const Text("رفع السعر")),
+
+            const SizedBox(width: 10),
+
+            OutlinedButton(onPressed: () {}, child: const Text("تعديل")),
+
+            const Spacer(),
+
+            Text(
+              "\$${data["price"] ?? 0}",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 /// TAB
 class TabItem extends StatelessWidget {
   final String text;
   final bool active;
+
   const TabItem(this.text, this.active, {super.key});
 
   @override
@@ -120,117 +284,11 @@ class TabItem extends StatelessWidget {
   }
 }
 
-/// CONTENT CARD
-class ContentCard extends StatelessWidget {
-  const ContentCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        /// IMAGE + OVERLAY
-        Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.network(
-                "https://images.unsplash.com/photo-1544006659-f0b21884ce1d",
-                height: 170,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-
-            /// Play button
-            const Positioned.fill(
-              child: Center(
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.black54,
-                  child: Icon(Icons.play_arrow, color: Colors.white, size: 28),
-                ),
-              ),
-            ),
-
-            /// top labels
-            Positioned(
-              top: 10,
-              right: 10,
-              child: Row(
-                children: [
-                  Label("حصري", Colors.red),
-                  const SizedBox(width: 6),
-                  Label("مباع", Colors.green),
-                ],
-              ),
-            ),
-
-            /// duration
-            Positioned(bottom: 8, left: 8, child: SmallTag("5:10")),
-
-            /// views
-            Positioned(bottom: 8, right: 8, child: SmallTag("200")),
-          ],
-        ),
-
-        const SizedBox(height: 10),
-
-        /// TITLE + DETAILS
-        const Text("حروب وصراعات", style: TextStyle(color: Colors.red)),
-        const SizedBox(height: 4),
-
-        const Text(
-          "قصف عنيف في جميع أنحاء القطاع",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-
-        const SizedBox(height: 6),
-
-        Row(
-          children: const [
-            Icon(Icons.location_on, size: 16, color: Colors.red),
-            Text("غزة، فلسطين"),
-            Spacer(),
-            Icon(Icons.access_time, size: 16, color: Colors.blue),
-            Text(" منذ يومين"),
-            Spacer(),
-            Icon(Icons.tv, size: 16),
-            Text(" الجزيرة"),
-          ],
-        ),
-
-        const SizedBox(height: 12),
-
-        /// ACTIONS
-        Row(
-          children: [
-            const Icon(Icons.more_horiz),
-            const SizedBox(width: 10),
-
-            OutlinedButton(onPressed: () {}, child: const Text("رفع السعر")),
-
-            const SizedBox(width: 10),
-
-            OutlinedButton(onPressed: () {}, child: const Text("تعديل")),
-
-            const Spacer(),
-
-            const Text(
-              "\$ 850",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
 /// LABEL
 class Label extends StatelessWidget {
   final String text;
   final Color color;
+
   const Label(this.text, this.color, {super.key});
 
   @override
@@ -252,6 +310,7 @@ class Label extends StatelessWidget {
 /// SMALL TAG
 class SmallTag extends StatelessWidget {
   final String text;
+
   const SmallTag(this.text, {super.key});
 
   @override

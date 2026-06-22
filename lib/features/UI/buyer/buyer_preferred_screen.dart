@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:khabar/core/routing/routes.dart';
 
 class BuyerPreferredScreen extends StatelessWidget {
   const BuyerPreferredScreen({super.key});
@@ -25,7 +27,10 @@ class BuyerPreferredScreen extends StatelessWidget {
                       ),
                     ),
                     Spacer(),
-                    Text("7 محفوظات", style: TextStyle(color: Colors.red)),
+                    Text(
+                      "10 محفوظات",
+                      style: TextStyle(color: Color.fromARGB(255, 0, 42, 77)),
+                    ),
                   ],
                 ),
               ),
@@ -41,7 +46,6 @@ class BuyerPreferredScreen extends StatelessWidget {
                     TabItem("الكل", true),
                     TabItem("فيديو", false),
                     TabItem("صور", false),
-                    TabItem("حصري", false),
                   ],
                 ),
               ),
@@ -50,7 +54,7 @@ class BuyerPreferredScreen extends StatelessWidget {
 
               /// STATS
               Container(
-                color: const Color(0xffE6D9C5),
+                color: const Color.fromARGB(255, 197, 210, 230),
                 child: Row(
                   children: const [
                     StatBox("\$3,240", "إجمالي"),
@@ -60,15 +64,40 @@ class BuyerPreferredScreen extends StatelessWidget {
                 ),
               ),
 
-              /// LIST
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: const [
-                    FavoriteCard(),
-                    SizedBox(height: 16),
-                    FavoriteCard(),
-                  ],
+                child: FutureBuilder<QuerySnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('newsupload')
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!snapshot.hasData) {
+                      return const Center(child: Text("لا توجد بيانات"));
+                    }
+
+                    final docs = (snapshot.data as QuerySnapshot).docs.toList();
+
+                    docs.shuffle();
+
+                    final randomDocs = docs.take(10).toList();
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: randomDocs.length,
+                      itemBuilder: (context, index) {
+                        final data =
+                            randomDocs[index].data() as Map<String, dynamic>;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: FavoriteCard(data: data),
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ],
@@ -93,12 +122,17 @@ class TabItem extends StatelessWidget {
         Text(
           text,
           style: TextStyle(
-            color: active ? Colors.red : Colors.black,
+            color: active ? Color.fromARGB(255, 0, 42, 77) : Colors.black,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 6),
-        if (active) Container(width: 30, height: 3, color: Colors.red),
+        if (active)
+          Container(
+            width: 30,
+            height: 3,
+            color: Color.fromARGB(255, 0, 42, 77),
+          ),
       ],
     );
   }
@@ -125,7 +159,10 @@ class StatBox extends StatelessWidget {
               value,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            Text(label, style: const TextStyle(color: Colors.grey)),
+            Text(
+              label,
+              style: const TextStyle(color: Color.fromARGB(255, 192, 200, 243)),
+            ),
           ],
         ),
       ),
@@ -135,26 +172,40 @@ class StatBox extends StatelessWidget {
 
 /// FAVORITE CARD
 class FavoriteCard extends StatelessWidget {
-  const FavoriteCard({super.key});
+  const FavoriteCard({super.key, required this.data});
+
+  final Map<String, dynamic> data;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xffE6D9C5),
+        color: const Color.fromARGB(255, 197, 210, 230),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           /// IMAGE
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.network(
-              "https://images.unsplash.com/photo-1549887534-3db5c71c3d0b",
-              height: 160,
-              width: double.infinity,
-              fit: BoxFit.cover,
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child: Image.network(
+                data['image'] ?? '',
+                height: 160,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    "assets/images/logo.png",
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  );
+                },
+              ),
             ),
           ),
 
@@ -163,36 +214,60 @@ class FavoriteCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                /// LOCATION
-                const Text("فلسطين - غزة", style: TextStyle(color: Colors.red)),
+                Text(
+                  data['region'] ?? '',
+                  style: const TextStyle(color: Colors.red),
+                ),
 
                 const SizedBox(height: 6),
 
-                /// TITLE
-                const Text(
-                  "لحظة قصف احد المباني في مدينة غزة",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  data['title'] ?? '',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 8),
 
-                /// FOOTER
+                // FOOTER
                 Row(
                   children: [
-                    /// DELETE
-                    OutlinedButton(onPressed: () {}, child: const Text("حذف")),
-
                     const SizedBox(width: 8),
-
-                    /// BUY BUTTON
+                    // BUY BUTTON
                     OutlinedButton(
-                      onPressed: () {},
-                      child: const Text("شراء 850\$"),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          Routes.buyerdetailsScreen,
+                          arguments: data,
+                        );
+                      },
+
+                      child: Text(
+                        "شراء ${data['price'] ?? 0}\$",
+                        style: const TextStyle(
+                          color: Color.fromARGB(255, 0, 0, 0),
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        side: const BorderSide(
+                          color: Color.fromARGB(255, 0, 0, 0),
+                        ),
+                      ),
                     ),
 
                     const Spacer(),
 
-                    const Text("فلسطين - منذ 12 د"),
+                    Text(
+                      data['createdAt'] != null
+                          ? (data['createdAt'] as Timestamp)
+                                .toDate()
+                                .toString()
+                                .substring(0, 10)
+                          : '',
+                      style: const TextStyle(
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    ),
                   ],
                 ),
               ],

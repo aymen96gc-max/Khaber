@@ -1,8 +1,101 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:khabar/core/routing/routes.dart';
 
-class SalerHomeScreen extends StatelessWidget {
+class SalerHomeScreen extends StatefulWidget {
   const SalerHomeScreen({super.key});
+
+  @override
+  State<SalerHomeScreen> createState() => _SalerHomeScreenState();
+
+  /// ACTION ITEM
+  static Widget actionItem(
+    SvgPicture icon,
+    String title,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: icon,
+        ),
+        const SizedBox(height: 6),
+        Text(title, style: const TextStyle(fontSize: 12)),
+      ],
+    );
+  }
+
+  static Widget statItem(String value, String label, String sub) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        Text(label, style: const TextStyle(color: Colors.grey)),
+        Text(sub, style: const TextStyle(color: Colors.green, fontSize: 12)),
+      ],
+    );
+  }
+
+  /// SALES ITEM
+
+  static Widget saleItem(String price, String title, String imagePath) {
+    return ListTile(
+      leading: Container(
+        width: 55,
+        height: 55,
+        decoration: BoxDecoration(
+          color: Colors.yellow.shade100,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Image.asset(imagePath),
+        ),
+      ),
+      title: Text(title, textAlign: TextAlign.right),
+      subtitle: const Text("قناة الجزيرة"),
+      trailing: Text(
+        price,
+        style: const TextStyle(
+          color: Colors.green,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _SalerHomeScreenState extends State<SalerHomeScreen> {
+  String? name;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUser();
+  }
+
+  Future<void> fetchUser() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection("saler")
+          .doc(user.uid)
+          .get();
+      setState(() {
+        name = doc['name'];
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +119,11 @@ class SalerHomeScreen extends StatelessWidget {
 
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [
-                      Text("👋 مرحباً", style: TextStyle(fontSize: 14)),
+                    children: [
+                      const Text("👋 مرحباً", style: TextStyle(fontSize: 14)),
                       Text(
-                        "أنس شابط",
-                        style: TextStyle(
+                        name ?? "",
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
                         ),
@@ -101,9 +194,14 @@ class SalerHomeScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            /// Withdraw
+                            // Withdraw
                             OutlinedButton.icon(
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  Routes.salerWalletScreen,
+                                );
+                              },
                               style: OutlinedButton.styleFrom(
                                 side: const BorderSide(color: Colors.white),
                                 shape: RoundedRectangleBorder(
@@ -158,25 +256,37 @@ class SalerHomeScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  actionItem(
+                  SalerHomeScreen.actionItem(
                     SvgPicture.asset("assets/svgs/upload.svg"),
                     "رفع محتوى",
                     Colors.blue,
+                    () {
+                      Navigator.pushNamed(context, Routes.salerUploadScreen);
+                    },
                   ),
-                  actionItem(
+                  SalerHomeScreen.actionItem(
                     SvgPicture.asset("assets/svgs/content.svg"),
                     "محتواي",
                     Colors.cyan,
+                    () {
+                      Navigator.pushNamed(context, Routes.salerContentScreen);
+                    },
                   ),
-                  actionItem(
+                  SalerHomeScreen.actionItem(
                     SvgPicture.asset("assets/svgs/sales.svg"),
-                    "المبيعات",
+                    "محفظتي",
                     Colors.pink,
+                    () {
+                      Navigator.pushNamed(context, Routes.salerWalletScreen);
+                    },
                   ),
-                  actionItem(
+                  SalerHomeScreen.actionItem(
                     SvgPicture.asset("assets/svgs/messages.svg"),
                     "الرسائل",
                     Colors.orange,
+                    () {
+                      Navigator.pushNamed(context, Routes.salermessagesScreen);
+                    },
                   ),
                 ],
               ),
@@ -187,9 +297,13 @@ class SalerHomeScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  statItem("4.9⭐", "تقييمك", "ممتاز"),
-                  statItem("8", "صفقات ناجحة", "+3 هذا الشهر"),
-                  statItem("14", "مواد منشورة", "+2 هذا الأسبوع"),
+                  SalerHomeScreen.statItem("4.9⭐", "تقييمك", "ممتاز"),
+                  SalerHomeScreen.statItem("8", "صفقات ناجحة", "+3 هذا الشهر"),
+                  SalerHomeScreen.statItem(
+                    "14",
+                    "مواد منشورة",
+                    "+2 هذا الأسبوع",
+                  ),
                 ],
               ),
 
@@ -245,15 +359,26 @@ class SalerHomeScreen extends StatelessWidget {
 
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
-                      children: const [
+                      children: [
                         Text(
                           "طلبات عاجلة بانتظارك",
                           style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
                         SizedBox(height: 4),
-                        Text(
-                          "2 طلبات الآن",
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        InkWell(
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              Routes.salerContentScreen,
+                            );
+                          },
+                          child: Text(
+                            "2 طلبات الآن",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -280,83 +405,23 @@ class SalerHomeScreen extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              saleItem(
+              SalerHomeScreen.saleItem(
                 "\$850+",
                 "انفجار درعا — فيديو",
                 "assets/images/sales1.jpg",
               ),
-              saleItem(
+              SalerHomeScreen.saleItem(
                 "\$420+",
                 "اجتماع دمشق الطارئ",
                 "assets/images/sales2.jpg",
               ),
-              saleItem(
+              SalerHomeScreen.saleItem(
                 "\$310+",
                 "فيضانات اللاذقية — صور",
                 "assets/images/sales3.jpg",
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  /// ACTION ITEM
-  static Widget actionItem(SvgPicture icon, String title, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: icon,
-        ),
-        const SizedBox(height: 6),
-        Text(title, style: const TextStyle(fontSize: 12)),
-      ],
-    );
-  }
-
-  /// STAT ITEM
-  static Widget statItem(String value, String label, String sub) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        Text(label, style: const TextStyle(color: Colors.grey)),
-        Text(sub, style: const TextStyle(color: Colors.green, fontSize: 12)),
-      ],
-    );
-  }
-
-  /// SALES ITEM
-
-  static Widget saleItem(String price, String title, String imagePath) {
-    return ListTile(
-      leading: Container(
-        width: 55,
-        height: 55,
-        decoration: BoxDecoration(
-          color: Colors.yellow.shade100,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Image.asset(imagePath),
-        ),
-      ),
-      title: Text(title, textAlign: TextAlign.right),
-      subtitle: const Text("قناة الجزيرة"),
-      trailing: Text(
-        price,
-        style: const TextStyle(
-          color: Colors.green,
-          fontWeight: FontWeight.bold,
         ),
       ),
     );

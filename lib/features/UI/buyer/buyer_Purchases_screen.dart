@@ -1,7 +1,38 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:khabar/core/helper/firebase_sarvices_product.dart';
+import 'package:khabar/core/helper/firebase_sarvices_user.dart';
+import 'package:khabar/core/routing/routes.dart';
 
-class BuyerPurchasesScreen extends StatelessWidget {
+class BuyerPurchasesScreen extends StatefulWidget {
   const BuyerPurchasesScreen({super.key});
+
+  @override
+  State<BuyerPurchasesScreen> createState() => _BuyerPurchasesScreenState();
+}
+
+class _BuyerPurchasesScreenState extends State<BuyerPurchasesScreen> {
+  final UserService userService = UserService();
+  final ProductService productService = ProductService();
+
+  bool isLoading = true;
+
+  List<DocumentSnapshot> products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts() async {
+    final docs = await productService.fetchProducts();
+
+    setState(() {
+      products = docs;
+      isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,27 +43,28 @@ class BuyerPurchasesScreen extends StatelessWidget {
           textDirection: TextDirection.rtl,
           child: Column(
             children: [
-              /// HEADER
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
-                  children: const [
-                    Text(
-                      "المشتريات",
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, Routes.buyerhomeSwitcher);
+                      },
+                      icon: const Icon(Icons.arrow_back_ios, size: 18),
+                      label: const Text(" "),
+                    ),
+                    const Text(
+                      "مشترياتي",
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
                         fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Spacer(),
-                    Text("2026", style: TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
-
               const Divider(),
-
-              /// TABS
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
@@ -44,30 +76,33 @@ class BuyerPurchasesScreen extends StatelessWidget {
 
               const Divider(),
 
-              /// STATS
               Container(
-                color: const Color(0xffE6D9C5),
+                color: const Color.fromARGB(255, 197, 210, 230),
                 child: Row(
-                  children: const [
-                    StatBox("12", "مشتريات"),
-                    StatBox("\$8,500", "إجمالي"),
-                    StatBox("5", "حصري"),
+                  children: [
+                    StatBox(products.length.toString(), "مشتريات"),
+                    const StatBox("\$8,500", "إجمالي"),
+                    const StatBox("5", "حصري"),
                   ],
                 ),
               ),
 
-              /// LIST
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: const [
-                    PurchaseCard(),
-                    SizedBox(height: 16),
-                    PurchaseCard(),
-                    SizedBox(height: 16),
-                    PurchaseCard(),
-                  ],
-                ),
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          final data =
+                              products[index].data() as Map<String, dynamic>;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: PurchaseCard(data: data),
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -77,63 +112,10 @@ class BuyerPurchasesScreen extends StatelessWidget {
   }
 }
 
-/// TAB
-class TabItem extends StatelessWidget {
-  final String text;
-  final bool active;
-
-  const TabItem(this.text, this.active, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          text,
-          style: TextStyle(
-            color: active ? Colors.red : Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 6),
-        if (active) Container(width: 30, height: 3, color: Colors.red),
-      ],
-    );
-  }
-}
-
-/// STAT BOX
-class StatBox extends StatelessWidget {
-  final String value;
-  final String label;
-
-  const StatBox(this.value, this.label, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: const BoxDecoration(
-          border: Border(left: BorderSide(color: Colors.black12)),
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-            ),
-            Text(label, style: const TextStyle(color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// PURCHASE CARD
 class PurchaseCard extends StatelessWidget {
-  const PurchaseCard({super.key});
+  final Map<String, dynamic> data;
+
+  const PurchaseCard({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -144,42 +126,62 @@ class PurchaseCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          /// TOP CONTENT
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                /// IMAGE
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(
-                    "https://images.unsplash.com/photo-1549887534-3db5c71c3d0b",
+                    data["image"] ?? data["thumbnail"] ?? "",
                     width: 90,
                     height: 80,
                     fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(
+                        "assets/images/logo.png",
+                        width: 90,
+                        height: 80,
+                        fit: BoxFit.cover,
+                      );
+                    },
                   ),
                 ),
 
                 const SizedBox(width: 10),
 
-                /// TEXT CONTENT
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [
+                    children: [
                       Text(
-                        "لحظة قصف احد المباني في مدينة غزة",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        data["title"] ?? "",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      SizedBox(height: 4),
+
+                      const SizedBox(height: 4),
+
                       Text(
-                        "فلسطين - غزة • فيديو 4K • حصري",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        "${data["region"] ?? ""} • ${data["type"] ?? ""}",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                       ),
-                      SizedBox(height: 4),
+
+                      const SizedBox(height: 4),
+
                       Text(
-                        "16 - يناير - 2026",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        data["createdAt"] != null
+                            ? (data["createdAt"] as Timestamp)
+                                  .toDate()
+                                  .toString()
+                                  .substring(0, 10)
+                            : "",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -187,18 +189,17 @@ class PurchaseCard extends StatelessWidget {
 
                 const SizedBox(width: 10),
 
-                /// PRICE
                 Column(
-                  children: const [
+                  children: [
                     Text(
-                      "\$850",
-                      style: TextStyle(
+                      "\$${data["price"] ?? 0}",
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
                     ),
-                    SizedBox(height: 4),
-                    Text("مكتمل", style: TextStyle(color: Colors.green)),
+                    const SizedBox(height: 4),
+                    const Text("مكتمل", style: TextStyle(color: Colors.green)),
                   ],
                 ),
               ],
@@ -207,7 +208,6 @@ class PurchaseCard extends StatelessWidget {
 
           const Divider(),
 
-          /// ACTIONS
           Padding(
             padding: const EdgeInsets.all(12),
             child: Row(
@@ -233,6 +233,58 @@ class PurchaseCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class TabItem extends StatelessWidget {
+  final String text;
+  final bool active;
+
+  const TabItem(this.text, this.active, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          text,
+          style: TextStyle(
+            color: active ? Colors.red : Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 6),
+        if (active) Container(width: 30, height: 3, color: Colors.red),
+      ],
+    );
+  }
+}
+
+class StatBox extends StatelessWidget {
+  final String value;
+  final String label;
+
+  const StatBox(this.value, this.label, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: const BoxDecoration(
+          border: Border(left: BorderSide(color: Colors.black12)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            Text(label, style: const TextStyle(color: Colors.grey)),
+          ],
+        ),
       ),
     );
   }

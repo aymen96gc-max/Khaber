@@ -239,5 +239,3 @@ class SalerNotificationsScreen extends StatelessWidget {
     );
   }
 }
-
-/// BOTTOM NAV

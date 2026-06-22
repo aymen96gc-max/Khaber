@@ -182,5 +182,3 @@ class SalerProfileScreen extends StatelessWidget {
     );
   }
 }
-
-/// BOTTOM NAV
