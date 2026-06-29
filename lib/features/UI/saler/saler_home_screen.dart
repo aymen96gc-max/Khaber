@@ -10,7 +10,7 @@ class SalerHomeScreen extends StatefulWidget {
   @override
   State<SalerHomeScreen> createState() => _SalerHomeScreenState();
 
-  /// ACTION ITEM
+  // ACTION ITEM
   static Widget actionItem(
     SvgPicture icon,
     String title,
@@ -19,13 +19,16 @@ class SalerHomeScreen extends StatefulWidget {
   ) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(16),
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: icon,
           ),
-          child: icon,
         ),
         const SizedBox(height: 6),
         Text(title, style: const TextStyle(fontSize: 12)),
@@ -46,37 +49,43 @@ class SalerHomeScreen extends StatefulWidget {
     );
   }
 
-  /// SALES ITEM
+  // SALES ITEM
 
-  static Widget saleItem(String price, String title, String imagePath) {
+  static Widget saleItem(String price, String title, String imageUrl) {
     return ListTile(
-      leading: Container(
-        width: 55,
-        height: 55,
-        decoration: BoxDecoration(
-          color: Colors.yellow.shade100,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Image.asset(imagePath),
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Image.network(
+          imageUrl,
+          width: 55,
+          height: 55,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Image.asset(
+              "assets/images/news.jpg",
+              width: 55,
+              height: 55,
+              fit: BoxFit.cover,
+            );
+          },
         ),
       ),
       title: Text(title, textAlign: TextAlign.right),
-      subtitle: const Text("قناة الجزيرة"),
-      trailing: Text(
-        price,
-        style: const TextStyle(
-          color: Colors.green,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      trailing: Text(price),
     );
   }
 }
 
 class _SalerHomeScreenState extends State<SalerHomeScreen> {
   String? name;
+  String? imageUrl;
+
+  Stream<DocumentSnapshot<Map<String, dynamic>>> get userStream {
+    return FirebaseFirestore.instance
+        .collection("salers")
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .snapshots();
+  }
 
   @override
   void initState() {
@@ -84,17 +93,82 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
     fetchUser();
   }
 
+  Stream<QuerySnapshot> get userNewsStream {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Stream.empty();
+    }
+
+    return FirebaseFirestore.instance
+        .collection('orders')
+        .where('sallerId', isEqualTo: user.uid)
+        .snapshots();
+  }
+
   Future<void> fetchUser() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
+
+    if (user == null) return;
+
+    try {
       final doc = await FirebaseFirestore.instance
-          .collection("saler")
+          .collection("salers")
           .doc(user.uid)
           .get();
-      setState(() {
-        name = doc['name'];
-      });
+
+      if (!mounted) return;
+
+      if (doc.exists) {
+        setState(() {
+          name = "${doc.data()?['firstName'] ?? ''} ";
+          imageUrl = doc.data()?['fileUrl']?.toString() ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching user: $e');
     }
+  }
+
+  Widget buildSalesList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: userNewsStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('خطأ في التحميل: ${snapshot.error}'));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Text("لا توجد أخبار مرفوعة");
+        }
+
+        final docs = snapshot.data!.docs.toList();
+        docs.sort((a, b) {
+          final aData = a.data() as Map<String, dynamic>;
+          final bData = b.data() as Map<String, dynamic>;
+          final aTime = aData['createdAt'] as Timestamp?;
+          final bTime = bData['createdAt'] as Timestamp?;
+          return (bTime?.millisecondsSinceEpoch ?? 0).compareTo(
+            aTime?.millisecondsSinceEpoch ?? 0,
+          );
+        });
+
+        return Column(
+          children: docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+
+            return SalerHomeScreen.saleItem(
+              "\$${data['price'] ?? 0}",
+              data['title'] ?? '',
+              data['fileUrl'] ?? '',
+            );
+          }).toList(),
+        );
+      },
+    );
   }
 
   @override
@@ -120,23 +194,22 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      const Text("👋 مرحباً", style: TextStyle(fontSize: 14)),
                       Text(
-                        name ?? "",
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
+                        "مرحباً , ${name ?? ""}",
+                        style: TextStyle(fontSize: 14),
                       ),
                     ],
                   ),
 
                   /// Avatar
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 24,
-                    backgroundImage: NetworkImage(
-                      "https://i.pravatar.cc/150?img=3",
-                    ),
+                    backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
+                        ? NetworkImage(imageUrl!)
+                        : null,
+                    child: imageUrl == null || imageUrl!.isEmpty
+                        ? const Icon(Icons.person)
+                        : null,
                   ),
                 ],
               ),
@@ -148,7 +221,7 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xff8B0000), Color(0xffC62828)],
+                    colors: [Color(0xff3F4C8F), Color(0xff5663C1)],
                     begin: Alignment.topRight,
                     end: Alignment.bottomLeft,
                   ),
@@ -164,7 +237,7 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.08),
+                          color: Colors.white.withOpacity(0.08),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -180,13 +253,33 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
 
                         const SizedBox(height: 8),
 
-                        const Text(
-                          "\$3,250",
-                          style: TextStyle(
-                            fontSize: 34,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+                          stream: userStream,
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const Text(
+                                "\$0",
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            }
+
+                            final data = snapshot.data!.data();
+
+                            final balance = (data?['balance'] ?? 0).toDouble();
+
+                            return Text(
+                              "\$${balance.toStringAsFixed(2)}",
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 14),
@@ -220,7 +313,7 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
 
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.end,
-                              children: const [
+                              children: [
                                 Text(
                                   "إجمالي  \$11,420",
                                   style: TextStyle(color: Colors.white),
@@ -309,7 +402,7 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
 
               const SizedBox(height: 22),
 
-              /// CHART
+              // CHART
               const Align(
                 alignment: Alignment.centerRight,
                 child: Text(
@@ -332,8 +425,8 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
                       height: [140, 120, 100, 80, 60, 90, 110][i].toDouble(),
                       decoration: BoxDecoration(
                         color: i == 0
-                            ? Colors.redAccent
-                            : Colors.redAccent.withValues(alpha: 0.7),
+                            ? Color(0xff3F4C8F)
+                            : Color(0xff5663C1).withOpacity(0.7),
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
@@ -358,13 +451,8 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
                     const SizedBox(width: 10),
 
                     Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "طلبات عاجلة بانتظارك",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                        SizedBox(height: 4),
                         InkWell(
                           onTap: () {
                             Navigator.pushNamed(
@@ -372,13 +460,16 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
                               Routes.salerContentScreen,
                             );
                           },
-                          child: Text(
-                            "2 طلبات الآن",
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
+                          child: const Text(
+                            "طلبات عاجلة بانتظارك",
+                            style: TextStyle(color: Colors.white, fontSize: 16),
                           ),
+                        ),
+
+                        SizedBox(height: 4),
+                        Text(
+                          "2 طلبات الآن",
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
                         ),
                       ],
                     ),
@@ -404,22 +495,7 @@ class _SalerHomeScreenState extends State<SalerHomeScreen> {
               ),
 
               const SizedBox(height: 8),
-
-              SalerHomeScreen.saleItem(
-                "\$850+",
-                "انفجار درعا — فيديو",
-                "assets/images/sales1.jpg",
-              ),
-              SalerHomeScreen.saleItem(
-                "\$420+",
-                "اجتماع دمشق الطارئ",
-                "assets/images/sales2.jpg",
-              ),
-              SalerHomeScreen.saleItem(
-                "\$310+",
-                "فيضانات اللاذقية — صور",
-                "assets/images/sales3.jpg",
-              ),
+              buildSalesList(),
             ],
           ),
         ),

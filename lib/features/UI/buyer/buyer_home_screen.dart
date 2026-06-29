@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:khabar/core/helper/firebase_sarvices_product.dart';
 import 'package:khabar/core/helper/firebase_sarvices_user.dart';
+import 'package:khabar/core/helper/video_preview.dart';
 import 'package:khabar/core/routing/routes.dart';
 import 'package:khabar/features/UI/buyer/buyer_search_screen.dart';
 
@@ -22,32 +23,17 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   bool isLoading = false;
   bool hasMore = true;
 
-  final ScrollController scrollController = ScrollController();
-
   @override
   void initState() {
     super.initState();
     fetchUser();
     loadProducts();
-
-    scrollController.addListener(() {
-      if (scrollController.position.pixels ==
-              scrollController.position.maxScrollExtent &&
-          !isLoading &&
-          hasMore) {
-        fetchProducts();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    scrollController.dispose();
-    super.dispose();
   }
 
   Future<void> loadProducts() async {
     final docs = await fetchProducts();
+
+    print("Loaded: ${docs.length}");
 
     setState(() {
       products = docs;
@@ -65,22 +51,26 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   }
 
   Future<List<DocumentSnapshot>> fetchProducts({String? region}) async {
-    print("Region Filter: $region");
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('newsupload')
+          .where('isSold', isEqualTo: false);
 
-    Query query = FirebaseFirestore.instance
-        .collection('newsupload')
-        .orderBy('createdAt', descending: true)
-        .limit(10);
+      if (region != null && region != "الكل") {
+        query = query.where('region', isEqualTo: region);
+      }
 
-    if (region != null && region != "الكل") {
-      query = query.where('region', isEqualTo: region);
+      final snapshot = await query.get();
+
+      for (var doc in snapshot.docs) {
+        print(doc.data());
+      }
+
+      return snapshot.docs;
+    } catch (e) {
+      print("ERROR => $e");
+      return [];
     }
-
-    final snapshot = await query.get();
-
-    print("Documents Found: ${snapshot.docs.length}");
-
-    return snapshot.docs;
   }
 
   Widget buildChip(String text) {
@@ -231,20 +221,29 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                               borderRadius: const BorderRadius.vertical(
                                 top: Radius.circular(12),
                               ),
-                              child: Image.network(
-                                data['image']?.toString() ?? '',
-                                width: double.infinity,
-                                height: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Image.asset(
-                                    'assets/images/logo.png',
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                  );
-                                },
-                              ),
+                              child: data['fileType'] == "video"
+                                  ? SizedBox(
+                                      height: 320,
+                                      width: double.infinity,
+                                      child: VideoPreview(
+                                        videoUrl: data['fileUrl'],
+                                      ),
+                                    )
+                                  : Image.network(
+                                      data['fileUrl'] ?? '',
+                                      width: double.infinity,
+                                      height: 320,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Image.asset(
+                                              'assets/images/news.jpg',
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                              fit: BoxFit.cover,
+                                            );
+                                          },
+                                    ),
                             ),
                           ),
 
@@ -316,24 +315,11 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
 
               Expanded(
                 child: ListView.builder(
-                  controller: scrollController,
-                  itemCount: products.length + 1,
+                  itemCount: products.length,
                   itemBuilder: (context, index) {
-                    if (index < products.length) {
-                      final data =
-                          products[index].data() as Map<String, dynamic>;
+                    final data = products[index].data() as Map<String, dynamic>;
 
-                      return ContentItemDynamic(data: data);
-                    } else {
-                      return Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Center(
-                          child: hasMore
-                              ? const CircularProgressIndicator()
-                              : const Text("انتهت البيانات"),
-                        ),
-                      );
-                    }
+                    return ContentItemDynamic(data: data);
                   },
                 ),
               ),
@@ -360,13 +346,13 @@ class ContentItemDynamic extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Image.network(
-                data['thumbnail'] ?? data['image'] ?? '',
+                data['fileUrl'],
                 width: 90,
                 height: 90,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Image.asset(
-                    'assets/images/logo.png',
+                    'assets/images/news.jpg',
                     width: 90,
                     height: 90,
                     fit: BoxFit.cover,
@@ -374,7 +360,7 @@ class ContentItemDynamic extends StatelessWidget {
                 },
               ),
 
-              if (data['type'] == 'video')
+              if (data['fileType'] == 'video')
                 const Icon(Icons.play_circle, size: 40, color: Colors.white),
             ],
           ),

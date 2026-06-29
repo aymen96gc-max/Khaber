@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as path;
 
@@ -59,44 +61,6 @@ class SalerUploadScreen extends StatefulWidget {
       ),
     );
   }
-
-  /// RIGHTS CARD
-  static Widget rightsCard(bool selected) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(
-          color: selected ? Colors.red : Colors.grey.shade300,
-          width: selected ? 2 : 1,
-        ),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            selected ? Icons.diamond : Icons.lock,
-            color: selected ? Colors.blue : Colors.blueGrey,
-            size: 40,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            selected ? "حصري" : "غير حصري",
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            selected ? "بيع مرة واحدة فقط" : "بيع لأكثر من جهة",
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-          Text(
-            selected ? "سعر أعلى" : "سعر أقل",
-            style: const TextStyle(color: Colors.red, fontSize: 12),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _SalerUploadScreenState extends State<SalerUploadScreen> {
@@ -107,6 +71,27 @@ class _SalerUploadScreenState extends State<SalerUploadScreen> {
   TextEditingController newpriceController = TextEditingController();
   String? fileType;
   String? selectedRegion;
+  LatLng? selectedLocation;
+  DateTime? selectedDate;
+
+  bool isUploading = false;
+
+  Future<void> pickDate() async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+    );
+
+    if (picked != null) {
+      setState(() {
+        selectedDate = picked;
+
+        newtimeController.text = "${picked.day}/${picked.month}/${picked.year}";
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -152,23 +137,37 @@ class _SalerUploadScreenState extends State<SalerUploadScreen> {
         return;
       }
 
+      final sallerDoc = await FirebaseFirestore.instance
+          .collection("salers")
+          .doc(user.uid)
+          .get();
+
+      final sallerName =
+          "${sallerDoc.data()?["firstName"] ?? ""} "
+          "${sallerDoc.data()?["lastName"] ?? ""}";
+
       String fileUrl = await uploadFile(pickedFile!) ?? "";
 
       /// حفظ البيانات في Firestore
-      await FirebaseFirestore.instance.collection("newsupload").add({
-        "userId": user.uid,
+      final doc = FirebaseFirestore.instance.collection("newsupload").doc();
+      await doc.set({
+        "docId": doc.id,
+        "sallerId": user.uid,
+        "buyerId": null,
+        "userName": sallerName,
         "title": newaddressnameController.text.trim(),
         "description": newdescriptionController.text.trim(),
         "region": selectedRegion ?? "",
         "address": newaddressController.text.trim(),
-        "date": newtimeController.text.trim(),
-        "price": double.tryParse(newpriceController.text.trim()) ?? 0.0,
-        "image": fileUrl,
+        "date": selectedDate == null ? null : Timestamp.fromDate(selectedDate!),
+        "price": double.tryParse(newpriceController.text.trim()) ?? 0,
+        "latitude": selectedLocation?.latitude,
+        "longitude": selectedLocation?.longitude,
+        "fileUrl": fileUrl,
         "fileType": fileType,
-        "type": fileType == "video" ? fileUrl : fileUrl,
+        "isSold": false,
         "createdAt": FieldValue.serverTimestamp(),
       });
-
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("✅ تم الرفع بنجاح")));
@@ -258,7 +257,7 @@ class _SalerUploadScreenState extends State<SalerUploadScreen> {
                 /// TITLE
                 Row(
                   children: [
-                    const Icon(Icons.arrow_forward_ios, size: 18),
+                    const Icon(Icons.arrow_back, size: 18),
                     const SizedBox(width: 8),
                     const Text(
                       "رفع محتوى جديد",
@@ -350,7 +349,7 @@ class _SalerUploadScreenState extends State<SalerUploadScreen> {
                   children: [
                     Expanded(
                       child: SalerUploadScreen.field(
-                        "الموقع",
+                        "العنوان",
                         controller: newaddressController,
                       ),
                     ),
@@ -391,75 +390,64 @@ class _SalerUploadScreenState extends State<SalerUploadScreen> {
 
                 const SizedBox(height: 10),
 
-                /// MAP
                 Container(
-                  height: 120,
+                  height: 220,
+                  clipBehavior: Clip.antiAlias,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    image: const DecorationImage(
-                      image: NetworkImage(
-                        "https://maps.gstatic.com/tactile/basepage/pegman_sherlock.png",
+                  ),
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(31.5017, 34.4668),
+                      initialZoom: 12,
+                      onTap: (tapPosition, point) {
+                        setState(() {
+                          selectedLocation = point;
+                        });
+                      },
+                    ),
+
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                        subdomains: const ['a', 'b', 'c', 'd'],
+                        userAgentPackageName: 'com.khabar.app',
                       ),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  child: const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.location_on, color: Colors.red, size: 40),
-                        Text("اضغط لتحديد الموقع على الخريطة"),
-                      ],
-                    ),
+
+                      if (selectedLocation != null)
+                        MarkerLayer(
+                          markers: [
+                            Marker(
+                              point: selectedLocation!,
+                              width: 40,
+                              height: 40,
+                              child: const Icon(
+                                Icons.location_on,
+                                color: Colors.red,
+                                size: 40,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
                 ),
 
                 const SizedBox(height: 16),
 
-                SalerUploadScreen.field(
-                  "وقت التصوير",
+                TextField(
                   controller: newtimeController,
-                ),
-
-                const SizedBox(height: 16),
-
-                /// CATEGORY
-                const Text(
-                  "التصنيف",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-
-                const SizedBox(height: 10),
-
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    SalerUploadScreen.chip("🚒 حوادث"),
-                    SalerUploadScreen.chip("🏛 سياسة"),
-                    SalerUploadScreen.chip("⚔️ حرب"),
-                    SalerUploadScreen.chip("⚽ رياضة"),
-                    SalerUploadScreen.chip("💰 اقتصاد"),
-                    SalerUploadScreen.chip("🌍 طبيعة"),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                /// RIGHTS
-                const Text(
-                  "نوع الحقوق",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                ),
-
-                const SizedBox(height: 10),
-
-                Row(
-                  children: [
-                    Expanded(child: SalerUploadScreen.rightsCard(false)),
-                    const SizedBox(width: 10),
-                    Expanded(child: SalerUploadScreen.rightsCard(true)),
-                  ],
+                  readOnly: true,
+                  onTap: pickDate,
+                  decoration: InputDecoration(
+                    hintText: "اختر تاريخ التصوير",
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                 ),
 
                 const SizedBox(height: 20),

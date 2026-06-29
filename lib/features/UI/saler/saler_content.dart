@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:khabar/core/helper/firebase_sarvices_product.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:khabar/features/UI/buyer/buyer_purchases_screen.dart';
-
+import 'package:khabar/core/helper/video_preview.dart';
 
 class SalerContentScreen extends StatefulWidget {
   const SalerContentScreen({super.key});
@@ -12,24 +12,22 @@ class SalerContentScreen extends StatefulWidget {
 }
 
 class _SalerContentScreenState extends State<SalerContentScreen> {
-  final ProductService productService = ProductService();
-
-  List<DocumentSnapshot> products = [];
-  bool isLoading = true;
-
+  String searchText = '';
   @override
   void initState() {
     super.initState();
-    fetchProducts();
   }
 
-  Future<void> fetchProducts() async {
-    final docs = await productService.fetchProducts();
+  Stream<QuerySnapshot> get userContentStream {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      return const Stream.empty();
+    }
 
-    setState(() {
-      products = docs;
-      isLoading = false;
-    });
+    return FirebaseFirestore.instance
+        .collection('newsupload')
+        .where('sallerId', isEqualTo: user.uid)
+        .snapshots();
   }
 
   @override
@@ -45,19 +43,6 @@ class _SalerContentScreenState extends State<SalerContentScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(
-                        Icons.add,
-                        color: Colors.white,
-                        size: 30,
-                      ),
-                    ),
                     const SizedBox(width: 10),
                     const Text(
                       "⚡ محتوى",
@@ -89,6 +74,11 @@ class _SalerContentScreenState extends State<SalerContentScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: TextField(
+                  onChanged: (value) {
+                    setState(() {
+                      searchText = value.trim();
+                    });
+                  },
                   decoration: InputDecoration(
                     hintText: "ابحث عن محتواك ...",
                     prefixIcon: const Icon(Icons.search),
@@ -102,21 +92,58 @@ class _SalerContentScreenState extends State<SalerContentScreen> {
               ),
 
               Expanded(
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          final data =
-                              products[index].data() as Map<String, dynamic>;
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: userContentStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: ContentCard(data: data),
-                          );
-                        },
-                      ),
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text('خطأ في التحميل: ${snapshot.error}'),
+                      );
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(child: Text("لا يوجد محتوى"));
+                    }
+                    final filteredDocs = snapshot.data!.docs.where((doc) {
+                      final data = doc.data() as Map<String, dynamic>;
+
+                      final title = (data["title"] ?? "")
+                          .toString()
+                          .toLowerCase();
+
+                      final region = (data["region"] ?? "")
+                          .toString()
+                          .toLowerCase();
+
+                      final description = (data["description"] ?? "")
+                          .toString()
+                          .toLowerCase();
+                      final searchText = this.searchText.toLowerCase();
+
+                      return title.contains(searchText) ||
+                          region.contains(searchText) ||
+                          description.contains(searchText);
+                    }).toList();
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: filteredDocs.length,
+                      itemBuilder: (context, index) {
+                        final doc = filteredDocs[index];
+                        final data = doc.data() as Map<String, dynamic>;
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: ContentCard(data: data, docId: doc.id),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -128,8 +155,9 @@ class _SalerContentScreenState extends State<SalerContentScreen> {
 
 class ContentCard extends StatelessWidget {
   final Map<String, dynamic> data;
+  final String docId;
 
-  const ContentCard({super.key, required this.data});
+  const ContentCard({super.key, required this.data, required this.docId});
 
   @override
   Widget build(BuildContext context) {
@@ -137,26 +165,33 @@ class ContentCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Stack(
+          clipBehavior: Clip.none,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.network(
-                data["image"] ?? "",
-                height: 170,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) {
-                  return Container(
-                    height: 170,
-                    width: double.infinity,
-                    color: Colors.grey.shade300,
-                    child: const Icon(Icons.image, size: 50),
-                  );
-                },
-              ),
+              child: data['fileType'] == "video"
+                  ? SizedBox(
+                      height: 320,
+                      width: double.infinity,
+                      child: VideoPreview(videoUrl: data['fileUrl']),
+                    )
+                  : Image.network(
+                      data['fileUrl'] ?? '',
+                      width: double.infinity,
+                      height: 320,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/news.jpg',
+                          width: double.infinity,
+                          height: 320,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ),
             ),
 
-            if (data["type"] == "video")
+            if (data["fileType"] == "video")
               const Positioned.fill(
                 child: Center(
                   child: CircleAvatar(
@@ -178,16 +213,20 @@ class ContentCard extends StatelessWidget {
                 children: [
                   Label("حصري", Colors.red),
                   const SizedBox(width: 6),
-                  Label("مباع", Colors.green),
+                  if (data["isSold"] == true) Label("مباع", Colors.green),
                 ],
               ),
             ),
 
-            Positioned(bottom: 8, left: 8, child: SmallTag(data["type"] ?? "")),
+            Positioned(
+              bottom: 12,
+              left: 12,
+              child: SmallTag(data["fileType"] ?? ""),
+            ),
 
             Positioned(
-              bottom: 8,
-              right: 8,
+              bottom: 12,
+              right: 12,
               child: SmallTag(data["region"] ?? ""),
             ),
           ],
@@ -228,7 +267,7 @@ class ContentCard extends StatelessWidget {
 
             const Icon(Icons.tv, size: 16),
 
-            Text(data["type"] ?? ""),
+            Text(data["fileType"] ?? ""),
           ],
         ),
 
@@ -236,15 +275,161 @@ class ContentCard extends StatelessWidget {
 
         Row(
           children: [
-            const Icon(Icons.more_horiz),
+            OutlinedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (_) {
+                    final controller = TextEditingController(
+                      text: data["price"].toString(),
+                    );
 
-            const SizedBox(width: 10),
+                    return AlertDialog(
+                      title: const Text("تعديل السعر"),
+                      content: TextField(
+                        controller: controller,
+                        keyboardType: TextInputType.number,
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text("إلغاء"),
+                        ),
 
-            OutlinedButton(onPressed: () {}, child: const Text("رفع السعر")),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await FirebaseFirestore.instance
+                                .collection("newsupload")
+                                .doc(docId)
+                                .update({
+                                  "price":
+                                      double.tryParse(controller.text) ?? 0,
+                                });
 
-            const SizedBox(width: 10),
+                            Navigator.pop(context);
+                          },
+                          child: const Text("حفظ"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: const Text("تعديل السعر"),
+            ),
 
-            OutlinedButton(onPressed: () {}, child: const Text("تعديل")),
+            const SizedBox(width: 6),
+
+            OutlinedButton(
+              onPressed: () {
+                final titleController = TextEditingController(
+                  text: data["title"] ?? '',
+                );
+
+                final descriptionController = TextEditingController(
+                  text: data["description"] ?? '',
+                );
+
+                showDialog(
+                  context: context,
+                  builder: (_) {
+                    return AlertDialog(
+                      title: const Text("تعديل الخبر"),
+                      content: SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            TextField(
+                              controller: titleController,
+                              decoration: const InputDecoration(
+                                labelText: "العنوان",
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            TextField(
+                              controller: descriptionController,
+                              maxLines: 3,
+                              decoration: const InputDecoration(
+                                labelText: "الوصف",
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          child: const Text("إلغاء"),
+                        ),
+
+                        ElevatedButton(
+                          onPressed: () async {
+                            await FirebaseFirestore.instance
+                                .collection("newsupload")
+                                .doc(docId)
+                                .update({
+                                  "title": titleController.text.trim(),
+                                  "description": descriptionController.text
+                                      .trim(),
+                                });
+
+                            Navigator.pop(context);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("✅ تم تحديث الخبر")),
+                            );
+                          },
+                          child: const Text("حفظ"),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: const Text("تعديل"),
+            ),
+            const SizedBox(width: 6),
+
+            IconButton(
+              icon: const Icon(Icons.delete, color: Colors.red),
+              onPressed: () async {
+                final imageUrl = data["fileUrl"] ?? '';
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text("حذف الخبر"),
+                    content: const Text("هل أنت متأكد؟"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text("إلغاء"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text("حذف"),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true) {
+                  await FirebaseStorage.instance.refFromURL(imageUrl).delete();
+
+                  await FirebaseFirestore.instance
+                      .collection("newsupload")
+                      .doc(docId)
+                      .delete();
+                }
+              },
+            ),
 
             const Spacer(),
 

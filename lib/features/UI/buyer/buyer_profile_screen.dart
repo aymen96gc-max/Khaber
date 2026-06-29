@@ -149,7 +149,7 @@ class _BuyerProfileScreenState extends State<BuyerProfileScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
-                            "مشتري جديد",
+                            "مصور جديد",
                             style: TextStyle(color: Colors.green, fontSize: 12),
                           ),
                         ),

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:khabar/core/helper/video_preview.dart';
 import 'package:khabar/core/routing/routes.dart';
 
 class BuyerSearchScreen extends StatefulWidget {
@@ -114,20 +115,26 @@ class _BuyerSearchScreenState extends State<BuyerSearchScreen> {
                           );
                         },
 
-                        leading: Image.network(
-                          data['image'] ?? '',
-                          width: 60,
-                          height: 60,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Image.asset(
-                              "assets/images/logo.png",
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        ),
+                        leading: data['fileType'] == "video"
+                            ? SizedBox(
+                                height: 320,
+                                width: double.infinity,
+                                child: VideoPreview(videoUrl: data['fileUrl']),
+                              )
+                            : Image.network(
+                                data['fileUrl'] ?? '',
+                                width: double.infinity,
+                                height: 320,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                    "assets/images/news.jpg",
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                  );
+                                },
+                              ),
                         title: Text(data['title'] ?? ''),
                         subtitle: Text(data['region'] ?? ''),
                       );

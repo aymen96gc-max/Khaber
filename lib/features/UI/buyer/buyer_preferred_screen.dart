@@ -199,7 +199,7 @@ class FavoriteCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   return Image.asset(
-                    "assets/images/logo.png",
+                    "assets/images/news.jpg",
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,

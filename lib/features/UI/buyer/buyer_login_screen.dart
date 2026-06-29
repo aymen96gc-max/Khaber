@@ -1,7 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:khabar/core/routing/routes.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class BuyerLoginScreen extends StatelessWidget {
   final VoidCallback onClickSignUpBuyer;
@@ -14,11 +14,45 @@ class BuyerLoginScreen extends StatelessWidget {
 
     Future<void> login() async {
       try {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailController.text.trim(),
-          password: passwordController.text.trim(),
-        );
-        // Navigate to home after successful login
+        final credential = await FirebaseAuth.instance
+            .signInWithEmailAndPassword(
+              email: emailController.text.trim(),
+              password: passwordController.text.trim(),
+            );
+
+        await credential.user!.reload();
+
+        final user = FirebaseAuth.instance.currentUser;
+
+        if (user == null || !user.emailVerified) {
+          await FirebaseAuth.instance.signOut();
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("يرجى التحقق من بريدك الالكتروني")),
+            );
+          }
+
+          return;
+        }
+
+        final buyerDoc = await FirebaseFirestore.instance
+            .collection("buyers")
+            .doc(user.uid)
+            .get();
+
+        if (!buyerDoc.exists) {
+          await FirebaseAuth.instance.signOut();
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("هذا الحساب ليس حساب مشتري")),
+            );
+          }
+
+          return;
+        }
+
         if (context.mounted) {
           Navigator.of(context).pushReplacementNamed(Routes.buyerhomeSwitcher);
         }
@@ -66,14 +100,17 @@ class BuyerLoginScreen extends StatelessWidget {
               /// Email
               buildTextField(
                 "البريد الالكتروني",
+                "البريد الالكتروني",
                 controller: emailController,
                 isPassword: false,
+                keyboardType: TextInputType.emailAddress,
               ),
 
               const SizedBox(height: 15),
 
               /// Password
               buildTextField(
+                "كلمة المرور",
                 "كلمة المرور",
                 controller: passwordController,
                 isPassword: true,
@@ -179,30 +216,42 @@ class BuyerLoginScreen extends StatelessWidget {
 
   /// TextField Widget
   Widget buildTextField(
+    String label,
     String hint, {
     bool isPassword = false,
+    TextInputType keyboardType = TextInputType.text,
+
     required TextEditingController controller,
   }) {
-    return TextField(
-      controller: controller,
-      obscureText: isPassword,
-      decoration: InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 15,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          obscureText: isPassword,
+          keyboardType: keyboardType,
+
+          decoration: InputDecoration(
+            hintText: hint,
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 15,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFF1E4F8A)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFF1E4F8A), width: 2),
+            ),
+          ),
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF1E4F8A)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Color(0xFF1E4F8A), width: 2),
-        ),
-      ),
+      ],
     );
   }
 

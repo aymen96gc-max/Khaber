@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:khabar/core/helper/firebase_sarvices_product.dart';
 import 'package:khabar/core/helper/firebase_sarvices_user.dart';
+import 'package:khabar/core/helper/video_preview.dart';
 import 'package:khabar/core/routing/routes.dart';
 
 class BuyerPurchasesScreen extends StatefulWidget {
@@ -14,25 +16,6 @@ class BuyerPurchasesScreen extends StatefulWidget {
 class _BuyerPurchasesScreenState extends State<BuyerPurchasesScreen> {
   final UserService userService = UserService();
   final ProductService productService = ProductService();
-
-  bool isLoading = true;
-
-  List<DocumentSnapshot> products = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchProducts();
-  }
-
-  Future<void> fetchProducts() async {
-    final docs = await productService.fetchProducts();
-
-    setState(() {
-      products = docs;
-      isLoading = false;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -76,33 +59,42 @@ class _BuyerPurchasesScreenState extends State<BuyerPurchasesScreen> {
 
               const Divider(),
 
-              Container(
-                color: const Color.fromARGB(255, 197, 210, 230),
-                child: Row(
-                  children: [
-                    StatBox(products.length.toString(), "مشتريات"),
-                    const StatBox("\$8,500", "إجمالي"),
-                    const StatBox("5", "حصري"),
-                  ],
-                ),
-              ),
-
               Expanded(
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: products.length,
-                        itemBuilder: (context, index) {
-                          final data =
-                              products[index].data() as Map<String, dynamic>;
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection("orders")
+                      .where("buyerId", isEqualTo: userService.currentUser!.uid)
+                      .snapshots(),
+                  builder: (context, orderSnapshot) {
+                    if (!orderSnapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: PurchaseCard(data: data),
-                          );
-                        },
-                      ),
+                    final orders = orderSnapshot.data!.docs;
+
+                    double totalAmount = 0;
+
+                    for (var order in orders) {
+                      final data = order.data() as Map<String, dynamic>;
+
+                      totalAmount += (data["price"] as num?)?.toDouble() ?? 0;
+                    }
+
+                    if (orders.isEmpty) {
+                      return const Center(child: Text("لا توجد مشتريات"));
+                    }
+
+                    return ListView.builder(
+                      itemCount: orders.length,
+                      itemBuilder: (context, index) {
+                        final order =
+                            orders[index].data() as Map<String, dynamic>;
+
+                        return PurchaseCard(data: order);
+                      },
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -132,20 +124,27 @@ class PurchaseCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    data["image"] ?? data["thumbnail"] ?? "",
-                    width: 90,
-                    height: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(
-                        "assets/images/logo.png",
-                        width: 90,
-                        height: 80,
-                        fit: BoxFit.cover,
-                      );
-                    },
-                  ),
+                  child: data['fileType'] == "video"
+                      ? SizedBox(
+                          height: 90,
+                          width: 80,
+                          child: VideoPreview(videoUrl: data['fileUrl']),
+                        )
+                      : Image.network(
+                          data['fileUrl'] ?? '',
+                          width: 90,
+                          height: 80,
+                          fit: BoxFit.cover,
+
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              "assets/images/news.jpg",
+                              width: 90,
+                              height: 80,
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        ),
                 ),
 
                 const SizedBox(width: 10),
@@ -162,7 +161,7 @@ class PurchaseCard extends StatelessWidget {
                       const SizedBox(height: 4),
 
                       Text(
-                        "${data["region"] ?? ""} • ${data["type"] ?? ""}",
+                        "${data["region"] ?? ""} • ${data["fileType"] ?? ""}",
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
@@ -223,7 +222,34 @@ class PurchaseCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    final fileUrl = data["fileUrl"];
+
+                    if (fileUrl == null || fileUrl.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("لا يوجد ملف للتحميل")),
+                      );
+                      return;
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("بدأ التحميل...")),
+                    );
+
+                    FileDownloader.downloadFile(
+                      url: fileUrl,
+                      onDownloadCompleted: (path) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("✅ تم تحميل الملف بنجاح")),
+                        );
+                      },
+                      onDownloadError: (error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("فشل التحميل: $error")),
+                        );
+                      },
+                    );
+                  },
                   child: const Text(
                     "تحميل",
                     style: TextStyle(color: Colors.white),
