@@ -132,7 +132,7 @@ class _BuyerProfileScreenState extends State<BuyerProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          isLoading ? "جاري التحميل..." : name!,
+                          isLoading ? "جاري التحميل..." : (name ?? "بدون اسم"),
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -149,7 +149,7 @@ class _BuyerProfileScreenState extends State<BuyerProfileScreen> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: const Text(
-                            "مشتري جديد",
+                            "مصور جديد",
                             style: TextStyle(color: Colors.green, fontSize: 12),
                           ),
                         ),

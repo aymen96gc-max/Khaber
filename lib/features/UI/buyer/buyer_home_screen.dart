@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:khabar/core/helper/firebase_sarvices_product.dart';
+import 'package:khabar/core/helper/firebase_sarvices_user.dart';
+import 'package:khabar/core/helper/video_preview.dart';
+import 'package:khabar/core/routing/routes.dart';
+import 'package:khabar/features/UI/buyer/buyer_search_screen.dart';
 
 class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
@@ -11,25 +15,95 @@ class BuyerHomeScreen extends StatefulWidget {
 
 class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   String? name;
+  String selectedRegion = "الكل";
 
+  final UserService userService = UserService();
+  final ProductService productService = ProductService();
+  List<DocumentSnapshot> products = [];
+  bool isLoading = false;
+  bool hasMore = true;
+
+  @override
   void initState() {
     super.initState();
     fetchUser();
+    loadProducts();
+  }
+
+  Future<void> loadProducts() async {
+    final docs = await fetchProducts();
+
+    print("Loaded: ${docs.length}");
+
+    setState(() {
+      products = docs;
+    });
   }
 
   Future<void> fetchUser() async {
-    final user = FirebaseAuth.instance.currentUser;
+    final userName = await userService.fetchUserName();
 
-    if (user != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection("buyers")
-          .doc(user.uid)
-          .get();
-
+    if (userName != null) {
       setState(() {
-        name = doc['name'];
+        name = userName;
       });
     }
+  }
+
+  Future<List<DocumentSnapshot>> fetchProducts({String? region}) async {
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('newsupload')
+          .where('isSold', isEqualTo: false);
+
+      if (region != null && region != "الكل") {
+        query = query.where('region', isEqualTo: region);
+      }
+
+      final snapshot = await query.get();
+
+      for (var doc in snapshot.docs) {
+        print(doc.data());
+      }
+
+      return snapshot.docs;
+    } catch (e) {
+      print("ERROR => $e");
+      return [];
+    }
+  }
+
+  Widget buildChip(String text) {
+    final isActive = selectedRegion == text;
+
+    return GestureDetector(
+      onTap: () async {
+        setState(() {
+          selectedRegion = text;
+          products.clear();
+          hasMore = true;
+        });
+
+        productService.resetPagination();
+
+        final docs = await fetchProducts(region: selectedRegion);
+        setState(() {
+          products.addAll(docs);
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? Colors.red : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(color: isActive ? Colors.white : Colors.black),
+        ),
+      ),
+    );
   }
 
   @override
@@ -39,141 +113,217 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
       body: SafeArea(
         child: Directionality(
           textDirection: TextDirection.rtl,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                /// HEADER WITH GRADIENT
-                Stack(
-                  children: [
-                    Container(
-                      height: 200,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xff3F4C8F), Color(0xff5663C1)],
-                          begin: Alignment.topRight,
-                          end: Alignment.bottomLeft,
-                        ),
+          child: Column(
+            children: [
+              /// HEADER
+              Stack(
+                children: [
+                  Container(
+                    height: 200,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xff3F4C8F), Color(0xff5663C1)],
                       ),
                     ),
-
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Row(
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "مرحباً، ${name ?? ""}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Container(
+                          height: 50,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
                             children: [
-                              const SizedBox(width: 10),
-                              Text(
-                                "مرحباً، ${name ?? ""}",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                              Expanded(
+                                child: TextField(
+                                  onSubmitted: (value) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => BuyerSearchScreen(
+                                          searchText: value,
+                                          products: products,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  keyboardType: TextInputType.text,
+                                  decoration: InputDecoration(
+                                    border: InputBorder.none,
+                                    prefixIcon: const Icon(
+                                      Icons.search,
+                                      color: Colors.black,
+                                    ),
+                                    hintText: "ابحث...",
+                                    hintStyle: const TextStyle(
+                                      color: Colors.black54,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
 
-                          const SizedBox(height: 20),
+              /// عاجل
+              Container(
+                width: double.infinity,
+                color: Colors.red,
+                padding: const EdgeInsets.all(8),
+                child: const Text(
+                  "عاجل",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
 
-                          /// SEARCH BOX
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.blueGrey.shade700,
-                              borderRadius: BorderRadius.circular(14),
+              const SizedBox(height: 10),
+
+              SizedBox(
+                height: 180,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final data = products[index].data() as Map<String, dynamic>;
+
+                    return Container(
+                      width: 260,
+                      margin: const EdgeInsets.only(left: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12),
+                              ),
+                              child: data['fileType'] == "video"
+                                  ? SizedBox(
+                                      height: 320,
+                                      width: double.infinity,
+                                      child: VideoPreview(
+                                        videoUrl: data['fileUrl'],
+                                      ),
+                                    )
+                                  : Image.network(
+                                      data['fileUrl'] ?? '',
+                                      width: double.infinity,
+                                      height: 320,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) {
+                                            return Image.asset(
+                                              'assets/images/news.jpg',
+                                              width: double.infinity,
+                                              height: double.infinity,
+                                              fit: BoxFit.cover,
+                                            );
+                                          },
+                                    ),
                             ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.search, color: Colors.white70),
-                                SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    "ابحث عن خبر أو حدث أو منطقة...",
-                                    style: TextStyle(color: Colors.white70),
-                                  ),
-                                ),
-                              ],
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Text(
+                              data['title'] ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.right,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              right: 8,
+                              left: 8,
+                              bottom: 8,
+                            ),
+                            child: Text(
+                              data['region'] ?? '',
+                              style: const TextStyle(color: Colors.red),
                             ),
                           ),
                         ],
                       ),
+                    );
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    buildChip("الكل"),
+                    buildChip("غزة"),
+                    buildChip("سوريا"),
+                    buildChip("مصر"),
+                    buildChip("الأردن"),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              /// العنوان
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    Text("عرض الكل", style: TextStyle(color: Colors.red)),
+                    Spacer(),
+                    Text(
+                      "أحدث المحتوى",
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
+              ),
 
-                /// RED BREAKING BAR
-                Container(
-                  width: double.infinity,
-                  color: Colors.red,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: const Text(
-                    "عاجل",
-                    style: TextStyle(color: Colors.white),
-                  ),
+              const SizedBox(height: 10),
+
+              Expanded(
+                child: ListView.builder(
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final data = products[index].data() as Map<String, dynamic>;
+
+                    return ContentItemDynamic(data: data);
+                  },
                 ),
-
-                const SizedBox(height: 10),
-
-                /// TOP NEWS CARDS
-                SizedBox(
-                  height: 190,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    children: const [
-                      SizedBox(width: 10),
-                      NewsCard(),
-                      SizedBox(width: 10),
-                      NewsCard(),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                /// REGION FILTER
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      chip("الكل", true),
-                      chip("تركيا", false),
-                      chip("اليمن", false),
-                      chip("العراق", false),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                /// LATEST CONTENT TITLE
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Text("عرض الكل", style: TextStyle(color: Colors.red)),
-                      Spacer(),
-                      Text(
-                        "أحدث المحتوى",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 10),
-
-                /// LIST ITEMS
-                const ContentItem(),
-                const ContentItem(),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -181,102 +331,67 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   }
 }
 
-/// NEWS CARD (TOP)
-class NewsCard extends StatelessWidget {
-  const NewsCard({super.key});
+class ContentItemDynamic extends StatelessWidget {
+  final Map<String, dynamic> data;
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 260,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        color: Colors.white,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          /// IMAGE
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-            child: Stack(
-              children: [
-                Image.network(
-                  "https://images.unsplash.com/photo-1519681393784-d120267933ba",
-                  height: 110,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-
-                const Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Chip(label: Text("عاجل"), backgroundColor: Colors.red),
-                ),
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: const [
-                Text("قناة الجزيرة", style: TextStyle(color: Colors.red)),
-                SizedBox(height: 4),
-                Text("حزام ناري بمدينة قطاع غزة"),
-                SizedBox(height: 6),
-                Row(children: [Text("12 د"), Spacer(), Text("\$850")]),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// CONTENT LIST ITEM
-class ContentItem extends StatelessWidget {
-  const ContentItem({super.key});
+  const ContentItemDynamic({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          /// IMAGE
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              "https://images.unsplash.com/photo-1504711434969-e33886168f5c",
-              width: 90,
-              height: 90,
-              fit: BoxFit.cover,
-            ),
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              Image.network(
+                data['fileUrl'],
+                width: 90,
+                height: 90,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Image.asset(
+                    'assets/images/news.jpg',
+                    width: 90,
+                    height: 90,
+                    fit: BoxFit.cover,
+                  );
+                },
+              ),
+
+              if (data['fileType'] == 'video')
+                const Icon(Icons.play_circle, size: 40, color: Colors.white),
+            ],
           ),
 
           const SizedBox(width: 10),
 
-          /// TEXT
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                const Text("قطاع غزة", style: TextStyle(color: Colors.red)),
+                Text(
+                  data['region'] ?? '',
+                  style: const TextStyle(color: Color.fromARGB(255, 255, 0, 0)),
+                ),
                 const SizedBox(height: 4),
-                const Text("اشتباكات في شمال القطاع"),
+                Text(data['title'] ?? ''),
                 const SizedBox(height: 8),
-
                 Row(
-                  children: const [
-                    Text("\$650"),
-                    SizedBox(width: 10),
-                    OutlinedButton(onPressed: null, child: Text("شراء")),
-                    Spacer(),
-                    Text("أنس خ • 4.9 ⭐ "),
+                  children: [
+                    Text("\$${data['price'] ?? 0}"),
+                    const Spacer(),
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          Routes.buyerdetailsScreen,
+                          arguments: data,
+                        );
+                      },
+                      child: const Text("شراء"),
+                    ),
                   ],
                 ),
               ],
@@ -288,21 +403,17 @@ class ContentItem extends StatelessWidget {
   }
 }
 
-/// CHIP
-Widget chip(String text, bool active) {
-  return Padding(
-    padding: const EdgeInsets.only(left: 8),
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      decoration: BoxDecoration(
-        color: active ? Colors.red : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(color: active ? Colors.white : Colors.black),
-      ),
-    ),
-  );
+/// NEWS CARD
+class NewsCard extends StatelessWidget {
+  const NewsCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 260,
+      margin: const EdgeInsets.only(left: 10),
+      color: Colors.white,
+      child: const Center(child: Text("Top News")),
+    );
+  }
 }

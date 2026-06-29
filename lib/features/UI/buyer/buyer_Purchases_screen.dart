@@ -1,7 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_file_downloader/flutter_file_downloader.dart';
+import 'package:khabar/core/helper/firebase_sarvices_product.dart';
+import 'package:khabar/core/helper/firebase_sarvices_user.dart';
+import 'package:khabar/core/helper/video_preview.dart';
+import 'package:khabar/core/routing/routes.dart';
 
-class BuyerPurchasesScreen extends StatelessWidget {
+class BuyerPurchasesScreen extends StatefulWidget {
   const BuyerPurchasesScreen({super.key});
+
+  @override
+  State<BuyerPurchasesScreen> createState() => _BuyerPurchasesScreenState();
+}
+
+class _BuyerPurchasesScreenState extends State<BuyerPurchasesScreen> {
+  final UserService userService = UserService();
+  final ProductService productService = ProductService();
 
   @override
   Widget build(BuildContext context) {
@@ -12,27 +26,28 @@ class BuyerPurchasesScreen extends StatelessWidget {
           textDirection: TextDirection.rtl,
           child: Column(
             children: [
-              /// HEADER
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
-                  children: const [
-                    Text(
-                      "المشتريات",
+                  children: [
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.pushNamed(context, Routes.buyerhomeSwitcher);
+                      },
+                      icon: const Icon(Icons.arrow_back_ios, size: 18),
+                      label: const Text(" "),
+                    ),
+                    const Text(
+                      "مشترياتي",
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
                         fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Spacer(),
-                    Text("2026", style: TextStyle(color: Colors.red)),
                   ],
                 ),
               ),
-
               const Divider(),
-
-              /// TABS
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: const [
@@ -44,29 +59,41 @@ class BuyerPurchasesScreen extends StatelessWidget {
 
               const Divider(),
 
-              /// STATS
-              Container(
-                color: const Color(0xffE6D9C5),
-                child: Row(
-                  children: const [
-                    StatBox("12", "مشتريات"),
-                    StatBox("\$8,500", "إجمالي"),
-                    StatBox("5", "حصري"),
-                  ],
-                ),
-              ),
-
-              /// LIST
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: const [
-                    PurchaseCard(),
-                    SizedBox(height: 16),
-                    PurchaseCard(),
-                    SizedBox(height: 16),
-                    PurchaseCard(),
-                  ],
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection("orders")
+                      .where("buyerId", isEqualTo: userService.currentUser!.uid)
+                      .snapshots(),
+                  builder: (context, orderSnapshot) {
+                    if (!orderSnapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    final orders = orderSnapshot.data!.docs;
+
+                    double totalAmount = 0;
+
+                    for (var order in orders) {
+                      final data = order.data() as Map<String, dynamic>;
+
+                      totalAmount += (data["price"] as num?)?.toDouble() ?? 0;
+                    }
+
+                    if (orders.isEmpty) {
+                      return const Center(child: Text("لا توجد مشتريات"));
+                    }
+
+                    return ListView.builder(
+                      itemCount: orders.length,
+                      itemBuilder: (context, index) {
+                        final order =
+                            orders[index].data() as Map<String, dynamic>;
+
+                        return PurchaseCard(data: order);
+                      },
+                    );
+                  },
                 ),
               ),
             ],
@@ -77,7 +104,166 @@ class BuyerPurchasesScreen extends StatelessWidget {
   }
 }
 
-/// TAB
+class PurchaseCard extends StatelessWidget {
+  final Map<String, dynamic> data;
+
+  const PurchaseCard({super.key, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: data['fileType'] == "video"
+                      ? SizedBox(
+                          height: 90,
+                          width: 80,
+                          child: VideoPreview(videoUrl: data['fileUrl']),
+                        )
+                      : Image.network(
+                          data['fileUrl'] ?? '',
+                          width: 90,
+                          height: 80,
+                          fit: BoxFit.cover,
+
+                          errorBuilder: (context, error, stackTrace) {
+                            return Image.asset(
+                              "assets/images/news.jpg",
+                              width: 90,
+                              height: 80,
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        ),
+                ),
+
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        data["title"] ?? "",
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        "${data["region"] ?? ""} • ${data["fileType"] ?? ""}",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        data["createdAt"] != null
+                            ? (data["createdAt"] as Timestamp)
+                                  .toDate()
+                                  .toString()
+                                  .substring(0, 10)
+                            : "",
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(width: 10),
+
+                Column(
+                  children: [
+                    Text(
+                      "\$${data["price"] ?? 0}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text("مكتمل", style: TextStyle(color: Colors.green)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const Divider(),
+
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                OutlinedButton(onPressed: () {}, child: const Text("مشاركة")),
+                const SizedBox(width: 8),
+                OutlinedButton(onPressed: () {}, child: const Text("فاتورة")),
+                const Spacer(),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    final fileUrl = data["fileUrl"];
+
+                    if (fileUrl == null || fileUrl.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("لا يوجد ملف للتحميل")),
+                      );
+                      return;
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("بدأ التحميل...")),
+                    );
+
+                    FileDownloader.downloadFile(
+                      url: fileUrl,
+                      onDownloadCompleted: (path) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("✅ تم تحميل الملف بنجاح")),
+                        );
+                      },
+                      onDownloadError: (error) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("فشل التحميل: $error")),
+                        );
+                      },
+                    );
+                  },
+                  child: const Text(
+                    "تحميل",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class TabItem extends StatelessWidget {
   final String text;
   final bool active;
@@ -102,7 +288,6 @@ class TabItem extends StatelessWidget {
   }
 }
 
-/// STAT BOX
 class StatBox extends StatelessWidget {
   final String value;
   final String label;
@@ -126,113 +311,6 @@ class StatBox extends StatelessWidget {
             Text(label, style: const TextStyle(color: Colors.grey)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// PURCHASE CARD
-class PurchaseCard extends StatelessWidget {
-  const PurchaseCard({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          /// TOP CONTENT
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                /// IMAGE
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    "https://images.unsplash.com/photo-1549887534-3db5c71c3d0b",
-                    width: 90,
-                    height: 80,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-
-                const SizedBox(width: 10),
-
-                /// TEXT CONTENT
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: const [
-                      Text(
-                        "لحظة قصف احد المباني في مدينة غزة",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "فلسطين - غزة • فيديو 4K • حصري",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "16 - يناير - 2026",
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(width: 10),
-
-                /// PRICE
-                Column(
-                  children: const [
-                    Text(
-                      "\$850",
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text("مكتمل", style: TextStyle(color: Colors.green)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const Divider(),
-
-          /// ACTIONS
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                OutlinedButton(onPressed: () {}, child: const Text("مشاركة")),
-                const SizedBox(width: 8),
-                OutlinedButton(onPressed: () {}, child: const Text("فاتورة")),
-                const Spacer(),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () {},
-                  child: const Text(
-                    "تحميل",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
